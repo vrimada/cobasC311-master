@@ -1,0 +1,21 @@
+# Logs
+logs
+**/*.log
+**/*.log*
+
+# Directorios y dependencias
+node_modules
+test/*
+otros/*
+.vscode
+
+# Archivo de configuración producción y test
+config.json
+configTest.json
+
+# Archivos ocultos
+.hg
+
+# Archivos .exe o .zip
+*.exe
+*.zip

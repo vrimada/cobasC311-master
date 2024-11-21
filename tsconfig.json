@@ -1,0 +1,11 @@
+{
+  "compilerOptions": { 
+    "baseUrl": "./",
+   // "outDir": "./dist",
+    "module": "es2020",
+    "target": "ES2015", 
+    "moduleResolution": "Node",
+    "esModuleInterop": true,       // Para compatibilidad con módulos comunes (require)
+  },
+  "exclude": ["node_modules"]      // Excluye node_modules
+}

@@ -25,7 +25,7 @@ Explicación de los conceptos del ejemplo:
         'Y' is the year, 'M' is the month, and 'D' is the day.  
 **/
 
-import { FIELD_SEP } from "../constants.js";
+import { COMPONENT_SEP, FIELD_SEP, RECORD_SEP } from "../constants.js";
 
 export class PatientRecord{
     private _sex : string;
@@ -65,7 +65,7 @@ export class PatientRecord{
 
     // #endregion
     
-    toASTM() : (string | null[] | null)[] {
+    toArray() : (string | null[] | null)[] {
         return [
              'P',
              '1',
@@ -85,14 +85,25 @@ export class PatientRecord{
         ];
     }
 
-    cargarPatientRecord(protocol : any){
-        this.setName(protocol.paciente);
-        this.setBirthdate(protocol.anioNacimiento);
-        this.setSex(protocol.sexo);
+    cargarPatientRecord(protocol){
+        this.setName(protocol[0].paciente);
+        this.setBirthdate(protocol[0].anioNacimiento);
+        this.setSex(protocol[0].sexo);
     }
+
+    
     cargarPatientDesdeASTM(record : string) : void {
         let field = record.split(FIELD_SEP);
         this.setBirthdate(field[7]);
         this.setSex(field[8]);
     }
+
+    toASTM() : string {
+        let pipe = FIELD_SEP;
+        let astm = "P" + pipe + "1" + pipe + pipe + pipe + pipe + pipe + pipe + pipe + this.getSex();
+        astm = astm  + pipe + pipe + pipe + pipe + pipe + pipe + COMPONENT_SEP + RECORD_SEP;
+
+        return astm;
+    }
+    
 }

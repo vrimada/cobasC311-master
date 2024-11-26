@@ -1,3 +1,4 @@
+"use strict";
 // ===================================================================
 // Author: Matt Kruse <matt@mattkruse.com>
 // WWW: http://www.mattkruse.com/
@@ -17,6 +18,8 @@
 // Please DO NOT link directly to my .js files from your site. Copy
 // the files to your server and use them there. Thank you.
 // ===================================================================
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.formatDate = formatDate;
 // HISTORY
 // ------------------------------------------------------------------
 // May 17, 2003: Fixed bug in parseDate() for dates <1970
@@ -53,8 +56,8 @@
 //                      9/2/00
 //  "MMM dd, yyyy hh:mm:ssa" matches: "January 01, 2000 12:30:45AM"
 // ------------------------------------------------------------------
-let MONTH_NAMES = new Array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
-let DAY_NAMES = new Array('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat');
+var MONTH_NAMES = new Array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
+var DAY_NAMES = new Array('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat');
 function LZ(x) {
     return ((x < 0 || x > 9) ? "" : "0") + x;
 }
@@ -66,7 +69,7 @@ function LZ(x) {
 // passing it to this function, as whitespace is NOT ignored!
 // ------------------------------------------------------------------
 function isDate(val, format) {
-    let date = getDateFromFormat(val, format);
+    var date = getDateFromFormat(val, format);
     if (date == null) {
         return false;
     }
@@ -81,8 +84,8 @@ function isDate(val, format) {
 //  -1 if either of the dates is in an invalid format
 // -------------------------------------------------------------------
 function compareDates(date1, dateformat1, date2, dateformat2) {
-    let d1 = getDateFromFormat(date1, dateformat1);
-    let d2 = getDateFromFormat(date2, dateformat2);
+    var d1 = getDateFromFormat(date1, dateformat1);
+    var d2 = getDateFromFormat(date2, dateformat2);
     if (d1 == null || d2 == null) {
         return -1;
     }
@@ -96,21 +99,21 @@ function compareDates(date1, dateformat1, date2, dateformat2) {
 // Returns a date in the output format specified.
 // The format string uses the same abbreviations as in getDateFromFormat()
 // ------------------------------------------------------------------
-export function formatDate(date, format) {
+function formatDate(date, format) {
     format = format + ""; //yyyyMMddHHmmss
-    let result = "";
-    let i_format = 0;
-    let c = "";
-    let token = "";
-    let y = date.getFullYear();
-    let M = date.getMonth() + 1;
-    let d = date.getDate();
-    let E = date.getDay();
-    let H = date.getHours();
-    let m = date.getMinutes();
-    let s = date.getSeconds();
+    var result = "";
+    var i_format = 0;
+    var c = "";
+    var token = "";
+    var y = date.getFullYear();
+    var M = date.getMonth() + 1;
+    var d = date.getDate();
+    var E = date.getDay();
+    var H = date.getHours();
+    var m = date.getMinutes();
+    var s = date.getSeconds();
     // Convert real date parts into formatted versions
-    let value = new Object();
+    var value = new Object();
     value["y"] = y;
     value["yyyy"] = y;
     value["yy"] = y % 100;
@@ -172,8 +175,8 @@ export function formatDate(date, format) {
 // Utility functions for parsing in getDateFromFormat()
 // ------------------------------------------------------------------
 function _isInteger(val) {
-    let digits = "1234567890";
-    for (let i = 0; i < val.length; i++) {
+    var digits = "1234567890";
+    for (var i = 0; i < val.length; i++) {
         if (digits.indexOf(val.charAt(i)) == -1) {
             return false;
         }
@@ -181,8 +184,8 @@ function _isInteger(val) {
     return true;
 }
 function _getInt(str, i, minlength, maxlength) {
-    for (let x = maxlength; x >= minlength; x--) {
-        let token = str.substring(i, i + x);
+    for (var x = maxlength; x >= minlength; x--) {
+        var token = str.substring(i, i + x);
         if (_isInteger(token)) {
             return parseInt(token);
         }
@@ -202,19 +205,19 @@ function _getInt(str, i, minlength, maxlength) {
 function getDateFromFormat(val, format) {
     val = val + "";
     format = format + "";
-    let i_val = 0;
-    let i_format = 0;
-    let c = "";
-    let token = "";
-    let x, y;
-    let now = new Date();
-    let year = now.getFullYear();
-    let month = now.getMonth() + 1;
-    let date = 1;
-    let hh = now.getHours();
-    let mm = now.getMinutes();
-    let ss = now.getSeconds();
-    let ampm = "";
+    var i_val = 0;
+    var i_format = 0;
+    var c = "";
+    var token = "";
+    var x, y;
+    var now = new Date();
+    var year = now.getFullYear();
+    var month = now.getMonth() + 1;
+    var date = 1;
+    var hh = now.getHours();
+    var mm = now.getMinutes();
+    var ss = now.getSeconds();
+    var ampm = "";
     while (i_format < format.length) {
         // Get next token from format string
         c = format.charAt(i_format);
@@ -259,8 +262,8 @@ function getDateFromFormat(val, format) {
             case "NNN":
                 {
                     month = 0;
-                    for (let i = 0; i < MONTH_NAMES.length; i++) {
-                        let month_name = MONTH_NAMES[i];
+                    for (var i = 0; i < MONTH_NAMES.length; i++) {
+                        var month_name = MONTH_NAMES[i];
                         if (val.substring(i_val, i_val + month_name.length).toLowerCase() == month_name.toLowerCase()) {
                             if (token == "MMM" || (token == "NNN" && i > 11)) {
                                 month = i + 1;
@@ -280,8 +283,8 @@ function getDateFromFormat(val, format) {
             case "EE":
             case "E":
                 {
-                    for (let i = 0; i < DAY_NAMES.length; i++) {
-                        let day_name = DAY_NAMES[i];
+                    for (var i = 0; i < DAY_NAMES.length; i++) {
+                        var day_name = DAY_NAMES[i];
                         if (val.substring(i_val, i_val + day_name.length).toLowerCase() == day_name.toLowerCase()) {
                             i_val += day_name.length;
                             break;
@@ -424,7 +427,7 @@ function getDateFromFormat(val, format) {
     else if (hh > 11 && ampm == "AM") {
         hh -= 12;
     }
-    let newdate = new Date(year, month - 1, date, hh, mm, ss);
+    var newdate = new Date(year, month - 1, date, hh, mm, ss);
     return newdate;
 }
 // ------------------------------------------------------------------
@@ -441,15 +444,15 @@ function getDateFromFormat(val, format) {
 // Returns a Date object or null if no patterns match.
 // ------------------------------------------------------------------
 function parseDate(val) {
-    let preferEuro = (arguments.length == 2) ? arguments[1] : false;
-    let generalFormats = new Array('y-M-d', 'MMM d, y', 'MMM d,y', 'y-MMM-d', 'd-MMM-y', 'MMM d');
-    let monthFirst = new Array('M/d/y', 'M-d-y', 'M.d.y', 'MMM-d', 'M/d', 'M-d');
-    let dateFirst = new Array('d/M/y', 'd-M-y', 'd.M.y', 'd-MMM', 'd/M', 'd-M');
-    let checkList = new Array('generalFormats', preferEuro ? 'dateFirst' : 'monthFirst', preferEuro ? 'monthFirst' : 'dateFirst');
-    let d = null;
-    for (let i = 0; i < checkList.length; i++) {
-        let l = window[checkList[i]];
-        for (let j = 0; j < l.length; j++) {
+    var preferEuro = (arguments.length == 2) ? arguments[1] : false;
+    var generalFormats = new Array('y-M-d', 'MMM d, y', 'MMM d,y', 'y-MMM-d', 'd-MMM-y', 'MMM d');
+    var monthFirst = new Array('M/d/y', 'M-d-y', 'M.d.y', 'MMM-d', 'M/d', 'M-d');
+    var dateFirst = new Array('d/M/y', 'd-M-y', 'd.M.y', 'd-MMM', 'd/M', 'd-M');
+    var checkList = new Array('generalFormats', preferEuro ? 'dateFirst' : 'monthFirst', preferEuro ? 'monthFirst' : 'dateFirst');
+    var d = null;
+    for (var i = 0; i < checkList.length; i++) {
+        var l = window[checkList[i]];
+        for (var j = 0; j < l.length; j++) {
             d = getDateFromFormat(val, l[j]);
             if (d != 0) {
                 return new Date(d);

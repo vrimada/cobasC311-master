@@ -1,4 +1,4 @@
-import {COMPONENT_SEP, CR, CRLF, ENCODING, ETB, ETX, FIELD_SEP, LF, RECORD_SEP, REPEAT_SEP, STX } from './constants.js';
+import {COMPONENT_SEP, CR, CRLF, ENCODING, ETB, ETX, FIELD_SEP, LF, RECORD_SEP, REPEAT_SEP, STX } from './constants';
 import { Records } from './Records/Records.js';
 import { ResultRecord } from './Records/ResultRecord.js';
 
@@ -75,6 +75,50 @@ export function decodeMessage(message : string) : Records {
     return records;
 }
 
+/**
+* Common ASTM decoding function that tries to guess which kind of data it
+* handles.
+* If `data` starts with STX character (``0x02``) than probably it is
+* full ASTM message with checksum and other system characters.
+* If `data` starts with digit character (``0-9``) than probably it is
+* fraime of records leading by his sequence number. No checksum is expected
+* in this case.
+* Otherwise it counts `data` as regular record structure.
+* @param data: ASTM data object.
+* @return: Array of ASTM records.
+**/
+function decodeMessage_Anterior(message){
+    if (!(message.startsWith(STX) && message.endsWith(CRLF))){
+        throw new Error('Malformed ASTM message. Expected that it will started with STX and followed by CRLF characters. Got:' + message);
+    }
+    
+    var STXIndex = -1;
+    var fraimeMerge = [];
+    var fraime = "";
+    var msg = message.slice(1); // Remove first STX
+    while (msg.indexOf(STX) > -1 ){
+        STXIndex = msg.indexOf(STX);
+        fraime = message.slice(0,STXIndex + 1);
+        fraime = decodeFrame(fraime);
+        fraimeMerge.push(fraime);
+        
+        msg = msg.slice(STXIndex + 1);
+        message = message.slice(STXIndex + 1);
+    }
+
+    fraime = decodeFrame(message); // Last frame(should contains ETX)
+    fraimeMerge.push(fraime);
+    
+    var records = fraimeMerge.join("");
+    
+    var recordsArray = records.split(RECORD_SEP);
+    //logger.info(recordsArray); // TODO: Remove line
+    var records2 = [];
+    for (var i = 0; i < recordsArray.length; i++) {
+        records2.push(decodeRecord(recordsArray[i]));
+    }
+    return records2
+}
 export function decodeFrame(fraime : string) : string{
     // Decodes ASTM frame 
     fraime = fraime.slice(1);
@@ -192,6 +236,27 @@ export function decodeRepeatedComponent(component) {
 }
 // #endregion
 
+
+// #region Nueva_Codificacion
+export function encode(records : Records){
+    let size : number = 247;
+    let msg : string = encodeRecordResult(1, records, ENCODING);
+   
+    if (size && msg.length > size){
+        return split(msg, size);
+    }
+    return [msg];
+}
+
+export function encodeRecordResult(seq : number, records : Records , encoding : string) : string {
+    let ASTM = "", datos = "";
+    ASTM = records.getHeader().toASTM() + records.getPaciente().toASTM() + records.getOrden().toASTM() + records.getComentarios().toASTM() + records.getTermination().toASTM();
+    datos = [(seq % 8) , ASTM, CR, ETX].join('');
+    return [STX, datos, makeChecksum(datos), CR, LF].join('');
+}
+
+// #endregion
+
 // #region DeArrayATexto
 
 /**
@@ -207,7 +272,7 @@ export function decodeRepeatedComponent(component) {
 * @param {int} seq: Frame start sequence number.
 * @return: List of ASTM message chunks.
 **/
-export function encode(records: ArrayBuffer, encoding?, size?, seq?){
+export function encodeAnterior(records, encoding?, size?, seq?){
     encoding = typeof encoding !== 'undefined' ? encoding : ENCODING;
     seq = typeof seq !== 'undefined' ? seq : 1;
     size = typeof size !== 'undefined' ? size : 247;
@@ -230,17 +295,19 @@ export function encode(records: ArrayBuffer, encoding?, size?, seq?){
 * @return {string}: ASTM complete message with checksum and other control characters.
 **/
 export function encodeMessage(seq : number, records , encoding : string) : string {
-    let data;
+    let data = [];
+    let datos = "";
     let record;
-    for (let i = 0; i < records.byteLength; i++) {
+    for (let i = 0; i < records.length; i++) {
         record = records[i];
         // logger.info(record);
+        //console.log('record',record);
         data.fill(encodeRecord(record,encoding));
     }
     // logger.info(data);
     data.join(RECORD_SEP);
-    data = [(seq % 8) , data, CR, ETX].join('');
-    return [STX, data, makeChecksum(data), CR, LF].join('');
+    datos = [(seq % 8) , data, CR, ETX].join('');
+    return [STX, data, makeChecksum(datos), CR, LF].join('');
 }
 
 /**
@@ -251,25 +318,26 @@ export function encodeMessage(seq : number, records , encoding : string) : strin
 * @param {string} encoding: Data encoding.
 * @returns {string}: Encoded ASTM record.
 **/
-export function encodeRecord(record : ArrayBuffer, encoding : string) : string{ 
+export function encodeRecord(record , encoding : string) : string{ 
     let fields = [];
-    
-    for (let i = 0; i < record.byteLength; i++) {
-        let field = record[i];
-        if (Object.prototype.toString.call(field) === '[object Array]'){
-            fields.push(encodeComponent(field, encoding));
-        } else {
-            switch(typeof field){
-                case 'undefined' : 
-                case null :
-                    fields.push(''); 
+        for (let i = 0; i < record.length; i++) {
+            let field = record[i];
+            if (Object.prototype.toString.call(field) === '[object Array]'){
+                fields.push(encodeComponent(field, encoding));
+            } else {
+                switch(typeof field){
+                    case 'undefined' : 
+                    case null :
+                        fields.push(''); 
+                        break;
+                    default :
+                    fields.push(field);
                     break;
-                default :
-                fields.push(field);
-                break;
+                }
             }
         }
-    }
+    
+   
     return fields.join(FIELD_SEP); // return FIELD_SEP.join(fields)
 }
 
@@ -340,16 +408,18 @@ export function joinChunks(chunks : string) : string{
 **/
 function split(msg : string, size : number){
     let outputChunks = [];
-    let frame = parseInt(msg.slice(1,2));
+    let frame : number = parseInt(msg.slice(1,2));
     msg = msg.slice(2,-6);
+
     if (size === null || size < 7){
         throw new Error('Chunk size value could not be less then 7 or null');
     }
-    let chunks = make_chunks(msg, size - 7);
-    let firstChunks = chunks.slice(0,-1);
-    let last = chunks.slice(-1);
-    let idx = 0;
+    let chunks : string[] = make_chunks(msg, size - 7);
+    let firstChunks : string[] = chunks.slice(0,-1);
+    let last : string[] = chunks.slice(-1);
+    let idx : number= 0;
     let item : string;
+    
     for(let i = 0; i < firstChunks.length; i++){
         idx = i;
         let chunk = firstChunks[idx];
@@ -396,7 +466,8 @@ export function isChunkedMessage(message : string) : boolean {
 * @returns: Checksum value in hex base
 **/
 export function makeChecksum(message : string) : string {
-    let sumData = []
+    let sumData  = [];
+
     for(let i = 0; i < message.length; i++){
         sumData.push(message.charCodeAt(i));
    }

@@ -1,9 +1,10 @@
-import { CommentRecord } from "./CommentRecord.js";
-import { HeaderRecord } from "./HeaderRecord.js";
-import { OrderRecord } from "./OrderRecord.js";
-import { PatientRecord } from "./PatientRecord.js";
-import { ResultRecord } from "./ResultRecord.js";
-import { TerminationRecord } from "./TerminationRecord.js";
+import { RECORD_SEP } from "../constants";
+import { CommentRecord } from "./CommentRecord";
+import { HeaderRecord } from "./HeaderRecord";
+import { OrderRecord } from "./OrderRecord";
+import { PatientRecord } from "./PatientRecord";
+import { ResultRecord } from "./ResultRecord";
+import { TerminationRecord } from "./TerminationRecord";
 
 export class Records{
     private header : HeaderRecord;
@@ -75,21 +76,41 @@ export class Records{
      }
     // #endregion
 
-     toASTM() {
-      return [this.header.toASTM(), this.patient.toASTM(), this.orden.toASTM(), this.comentarios.toASTM(), this.termination.toASTM()];
+     toArray() {
+      return [this.header.toArray(), this.patient.toArray(), this.orden.toArray(), this.comentarios.toArray(), this.termination.toArray()];
      }
 
-     toString() {
+     toASTM(){
+      let _resultados = "";
+      
+      if(this.resultados.length !== 0){
+         let resultados = this.getResultados();
+        // console.dir(resultados);
+         resultados.forEach(r => {
+         _resultados += r.toASTM() + RECORD_SEP;
+        });
+      }
+      
+      let header = this.getHeader().toASTM();
+     // console.log("header "+header.toString());
+      
+      let paciente =  this.getPaciente().toASTM();
+      //console.log("paciente "+paciente);
+      
+      let orden = this.getOrden().toASTM();
+     // console.log("orden " + orden);
+      
+      let comentarios = this.getComentarios().toASTM();
+     // console.log("comentarios "+comentarios);
+      
+      let _ter = this.getTermination().toASTM();
+      //console.log("termination " +_ter);
+     
+      //final = `${header} ${paciente} ${orden} ${comentarios} ${result} ${termination}`
 
-      return "["+
-        
-        "["+this.header.toString()+"]"+'\x0D'+
-        "["+this.patient.toString()+"]"+'\x0D'+
-        "["+this.orden.toString()+"]"+'\x0D'+
-        "["+this.comentarios.toString()+"]"+'\x0D'+
-        "["+this.resultados.toString()+"]"+'\x0D'+
-        "["+this.termination.toString()+"]"+'\x0D'
-        +"]";
+      const final = [header , paciente , orden , _resultados, comentarios , _ter].join('');
+ 
+      return final;
      }
 
 }

@@ -1,6 +1,6 @@
-import  { formatDate }  from '../toolbox.js';
-import { TestRecord } from "./TestRecord.js";
-import {  FIELD_SEP } from '../constants.js';
+import  { formatDate }  from '../toolbox';
+import { TestRecord } from "./TestRecord";
+import {  COMPONENT_SEP, FIELD_SEP, RECORD_SEP, REPEAT_SEP } from '../constants';
   
   
    /****************************
@@ -49,23 +49,29 @@ import {  FIELD_SEP } from '../constants.js';
        private _type : string;
        private _seq : string;
        private _sampleId : string; 
+       private _instrument : string[];
        private _prefijoTipoMuestra : string;  
        private _biomaterial : number;
        private _dateTimeReported : Date;
        private _priority : string;
        private _sampleType : string;
        private _tests : TestRecord[];
+       private _accion : string;
+       private reportTipo : string;
 
         constructor(){
            this._type = "";
            this._seq = "";
            this._sampleId = "";
+           this._instrument = [];
            this._prefijoTipoMuestra = "";
            this._biomaterial = 0;
            this._dateTimeReported = new Date();
            this._priority = "";
            this._sampleType = "";
            this._tests = new Array<TestRecord>;
+           this._accion = "";
+           this.reportTipo = "";
         }
         
       
@@ -92,6 +98,14 @@ import {  FIELD_SEP } from '../constants.js';
     
         getSampleId() : string{
             return this._sampleId;
+        }
+
+        setInstrument(_ins : string[]){
+            this._instrument = _ins;
+        }
+
+        getInstrument(){
+            return this._instrument;
         }
     
         getPrefijoTipoMuestra() : string{
@@ -141,37 +155,79 @@ import {  FIELD_SEP } from '../constants.js';
         setSampleType(sampleType : string){
             this._sampleType = sampleType;
         }
+
+        getAccion(){
+            return this._accion;
+        }
+
+        setAccion(_acc : string){
+            this._accion = _acc;
+        }
     
+        setReportTipo(_reportTipo : string){
+            this.reportTipo = _reportTipo;
+        }
+
+        getReportTipo(){
+            return this.reportTipo;
+        }
        // #endregion
         
 
-       // #region PARA_ENIAR_A_SIL
+       // #region PARA_ENVIAR_A_SIL
 
        /** Datos de COBAS a SIL
          * Carga el flujo de datos de Cobas a la clase Order
+         * Se utilizo el PDF del repositorio para identificar la estructura del Order Record
          */
        
         cargarOrderDesdeASTM(flow : string){
             let field : string[] = flow.split(FIELD_SEP);
             let prefijoTipoMuestra : string = '';  
             let id : string = field[2];
-            this.setType(field[0]);
-            this.setSeq(field[1]);
-            this.setSampleId(field[2]);
-            this.setBiomaterial(parseInt(field[15]));
 
+            this.setType(field[0]); //(1)Record Type ID
+            this.setSeq(field[1]); //(2)Sequence Number
+            this.setSampleId(field[2]); //(3)Specimen ID
+
+            let instrument = field[3].split('^'); //(4)Instrument Specimen ID
+            this.setInstrument(instrument);
+            //Setting is as follows:
+            //< SequenceNo>^<Rack ID>^<PositionNo>^ ^
+            //<SampleType>^<ContainerType>
+            // console.dir("instrument < SequenceNo> "+ instrument[0]);
+            // console.dir("instrument <Rack ID> "+ instrument[1]);
+            // console.dir("instrument <PositionNo> "+ instrument[2]);
+            // console.dir("instrument "+ instrument[3]);
+            // console.dir("instrument <SampleType> "+ instrument[4]);
+            // console.dir("instrument <ContainerType> "+ instrument[5]);
+            this.setSampleType(instrument[4]);   //Tipo de muestra
+
+            // #region ArrayTestMuestras
+            //cargar muestras a testear
+            let testsArreglo : TestRecord[] = [];
+            let tests : string[] = field[4].split('^');
+            let i : number = 3; //Arranca en 3 porque tiene la forma ^^^<ApplicationCode>
+            while(i < tests.length){
+                let testRecord : TestRecord  = new TestRecord(tests[i]);
+                testsArreglo.push(testRecord);
+                i = i + 4;
+            }
+            // #endregion
+
+            this.setTests(testsArreglo); //(5)Universal Test ID
+
+
+            this.setPriority((field[5] === 'Y') ?  'S' : 'R'); //(6)Prioridad
+            this.setAccion(field[11]); //(12)Action Code
+            this.setBiomaterial(parseInt(field[15])); //(16)Specimen Descriptor
+            this.setReportTipo(field[25]); //(26) Report Types
             if (id.indexOf('-')> -1){
                 let complexOrderSampleId : string[] = id.split('-');
                 id =  complexOrderSampleId[0];            // Nro de protocolo
                 prefijoTipoMuestra = complexOrderSampleId[1];   // Prefijo del tipo de muestra
             }
-            
             this.setPrefijoTipoMuestra(prefijoTipoMuestra);
-            //Tipo de muestra
-            let tipo = field[3].split('^');
-            this.setSampleType( tipo[4]);
-            this.setPriority((field[5] === 'Y') ?  'S' : 'R'); // Prioridad
-            this.cargarIdItemCobas(field[4]); //cargar muestras a testear
         }
 
         // #endregion
@@ -181,15 +237,18 @@ import {  FIELD_SEP } from '../constants.js';
         /** Datos del SIL a COBAS
          * Carga el protocol del SIL a la clase Order
          */
-        cargarOrderRecordParaCobas(protocol : any){
+        cargarOrderRecordParaCobas(protocol){
 
             let tipoMuestraNombre : string = 'Suero/Plasma';
             let testsArreglo : TestRecord[] = [];
             let test : TestRecord;
             let testSplit : string[];
-            let testComponents : string = protocol.iditem.split(';');
+            let testComponents : string = protocol[0].iditem.split(';');
             let idTest : string = "";
             let i : number = 0;
+
+            this.setType('O');
+            this.setSeq('1');
 
             for (i = 0; i < testComponents.length; i++) {
                 // Cada item tiene la forma IdItem|TipoMuestra
@@ -199,87 +258,62 @@ import {  FIELD_SEP } from '../constants.js';
                 test  = new TestRecord(idTest);
                 testsArreglo.push(test);
             }
+            this.setTests(testsArreglo);
+
              // Tipo de muestra
             let tipoMuestra : number = 1;
             switch (tipoMuestraNombre){
-                    case "Suero/Plasma": tipoMuestra = 1; break;
-                    case "Orina": tipoMuestra = 2; break;
-                    case "CSF": tipoMuestra = 3; break;
-                    case "Suprnt": tipoMuestra = 4; break;
-                    case "Otros": tipoMuestra = 5; break;
+                case "Suero/Plasma": tipoMuestra = 1; break;
+                case "Orina": tipoMuestra = 2; break;
+                case "CSF": tipoMuestra = 3; break;
+                case "Suprnt": tipoMuestra = 4; break;
+                case "Otros": tipoMuestra = 5; break;
             }
-
-            this.setSampleId(protocol.numeroProtocolo.trim());
+            this.setSampleId(protocol[0].numeroProtocolo.trim());
             this.setBiomaterial(tipoMuestra);
             this.setSampleType( 'S' + tipoMuestra);
-            this.setTests(testsArreglo);
-            this.setPriority((protocol.urgente === 'Y') ?  'S' : 'R'); // Prioridad
+
+            // <SequenceNo>^<Rack ID>^<PositionNo>^ ^<SampleType>^<ContainerType>
+            let arrayInstrument : string[] = [];
+            arrayInstrument.push("0"); //<SequenceNo>
+            arrayInstrument.push(""); //<Rack ID>
+            arrayInstrument.push(""); //<PositionNo>
+            arrayInstrument.push(("S" + tipoMuestra)); //<SampleType>
+            arrayInstrument.push("SC"); //<SampleType> „SC‟: Standerd cup. „MC‟:Micro cup.
+            this.setInstrument(arrayInstrument); //
+
+            this.setPriority((protocol[0].urgente === 'Y') ?  'S' : 'R'); // Prioridad
+            this.setAccion("A");
+            this.setReportTipo("O");
         }
 
-        cargarIdItemCobas(field : string){
-            /**
-             * ^^^<ApplicationCode>^<Dilution>\… Repeat \ (delimiter) for multiple test selection.
-             * Ejemplo 
-             *  ^^^717^\^^^418^\^^^798^\^^^570^\^^^435^\^^^690^\^^^781^
-             * PROBLEMA: La cadena scopea el \ y da como resultado el string 
-             * ^^^717^^^^418^^^^798^^^^570^^^^435^^^^690^^^^781^ 
-             * Conlusion: Cada 4 tenemos el id de la aplicacion
-             */
-
-            //Muestras/Codigos a analizar
-            let testsArreglo : TestRecord[] = [];
-          
-
-           /* field.split(REPEAT_SEP).forEach(element => {
-                var itemsArray = element.split(COMPONENT_SEP);
-                testsArreglo.push(new TestRecord(itemsArray[3]));
-            });*/
-            
-          
-            let tests : string[] = field.split('^');
-            let i : number = 3; //Arranca en 3 porque tiene la forma ^^^<ApplicationCode>
-            while(i < tests.length){
-                let testRecord : TestRecord  = new TestRecord(tests[i]);
-                testsArreglo.push(testRecord);
-                i = i + 4;
-            }
-
-
-            this.setTests(testsArreglo);
-        }
-
-        toASTMTestComponent (testArray : TestRecord[]) {
-            var test = [null, null, null, testArray[0].getId(), null];
-            if (testArray.length == 1){
-                return test;
-            } 
-            else{
-                return [test, this.toASTMTestComponent(testArray.slice(1))]
-            }
-        }
-
-        toASTMTestComponente(){
+       
+        
+        /**
+         * cobas type (Upload) : se tiene que poner al final 'F'  @type Tiene que ir en True (de Cobas a Sil)
+         * cobas type (Download) : se tiene que poner al final 'O' @type tiene que ir en False (de Sil a Cobas)
+         */
+        toArray() {
+            var timestamp = formatDate(new Date(),'yyyyMMddHHmmss');
             let arregloFinal = [];
 
             this.getTests().forEach(element => {
+                let arregloItem = [];
                 //^^^<ApplicationCode>^<Dilution>\… Repeat \ (delimiter) for multiple test selection.
-                arregloFinal.push(null);
-                arregloFinal.push(null);
-                arregloFinal.push(null);
-                arregloFinal.push(element.getId());
+                arregloItem.push(null);
+                arregloItem.push(null);
+                arregloItem.push(null);
+                arregloItem.push(element.getId());
+
+                arregloFinal.push(arregloItem);
             });
-            return arregloFinal;
-        }
-    
-        toASTM() {
-            var timestamp = formatDate(new Date(),'yyyyMMddHHmmss');
 
             return [ 
                 this.getType(),
                 this.getSeq(),
                 this.getSampleId(),
                 [ '0', null, null, null, this.getSampleType(),'SC'],//[ null, null, null, null, null,null], // [ '0', '50001', '001', null, 'S1','SC'], S1=Plasma, S2=Urine
-                this.toASTMTestComponente(), 
+                arregloFinal, 
                 this.getPriority(),
                 null,                       // Requested/Ordered Date and Time                                
                 timestamp,                  // Indicates reception date and time of request.  Setting is as follows.  Deletable. YYYYMMDDHHMMSS
@@ -300,9 +334,35 @@ import {  FIELD_SEP } from '../constants.js';
                 null,
                 null,
                 null,
-                'O' 
+                this.getReportTipo() 
             ];
         }
-
         // #endregion
+
+        toASTM() : string{
+            let astm : string = "";
+            let pipe : string = FIELD_SEP;
+            let sep : string = COMPONENT_SEP;
+            var timestamp : string = formatDate(new Date(),'yyyyMMddHHmmss');
+            let instrument : string[] = this.getInstrument();
+            let tests : TestRecord[] = this.getTests();
+            let muestrasAnalizar : string= "";
+            tests.forEach(element => {
+                muestrasAnalizar += sep.repeat(3) + element.getId() + sep + REPEAT_SEP;
+            });
+            muestrasAnalizar = muestrasAnalizar.substring(0,muestrasAnalizar.length-1);
+            
+            astm += 'O'  + pipe;//(1)/Record Type ID
+            astm += (this.getSeq() === '' ? "1" : this.getSeq()) + pipe; //(2)Sequence Number
+            astm += this.getSampleId() + pipe;//(3)Specimen ID 
+            astm += instrument[0] + sep + instrument[1] + sep + instrument[2] + sep + instrument[3] + sep + instrument[4] + sep + instrument[5] + pipe;  //(4)Instrument Specimen ID:   <SequenceNo>^<Rack ID>^<PositionNo>^ ^<SampleType>^<ContainerType>
+            astm += muestrasAnalizar + pipe;//(5)Universal Test ID
+            astm += (this.getPriority() === '' ? 'R' : this.getPriority()) + pipe.repeat(2);//(6)Priority
+            astm += timestamp + pipe.repeat(4);//(8)Specimen Collection Date and Time
+            astm += this.getAccion() + pipe.repeat(4); //(12)Action Code
+            astm += this.getBiomaterial() + pipe.repeat(10);//(16)Specimen Descriptor
+            astm += this.getReportTipo();//(26)Report Types
+            astm += RECORD_SEP;
+            return astm;
+        }
     }

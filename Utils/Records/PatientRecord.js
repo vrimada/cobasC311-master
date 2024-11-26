@@ -1,3 +1,4 @@
+"use strict";
 /***************************************
 *              PatientRecord           *
 ****************************************
@@ -24,34 +25,36 @@ Explicación de los conceptos del ejemplo:
         -  Age Unit Specify: 'Y', 'M' or 'D'. Indicates unit of the age.
         'Y' is the year, 'M' is the month, and 'D' is the day.
 **/
-import { FIELD_SEP } from "../constants.js";
-export class PatientRecord {
-    constructor() {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PatientRecord = void 0;
+var constants_js_1 = require("../constants.js");
+var PatientRecord = /** @class */ (function () {
+    function PatientRecord() {
         this._sex = "";
         this._name = "";
         this._birthdate = "";
     }
     // #region GetterSetter
-    getSex() {
+    PatientRecord.prototype.getSex = function () {
         return this._sex;
-    }
-    setSex(sex) {
+    };
+    PatientRecord.prototype.setSex = function (sex) {
         this._sex = sex;
-    }
-    getName() {
+    };
+    PatientRecord.prototype.getName = function () {
         return this._name;
-    }
-    setName(name) {
+    };
+    PatientRecord.prototype.setName = function (name) {
         this._name = name;
-    }
-    getBirthdate() {
+    };
+    PatientRecord.prototype.getBirthdate = function () {
         return this._birthdate;
-    }
-    setBirthdate(birthdate) {
+    };
+    PatientRecord.prototype.setBirthdate = function (birthdate) {
         this._birthdate = birthdate;
-    }
+    };
     // #endregion
-    toASTM() {
+    PatientRecord.prototype.toArray = function () {
         return [
             'P',
             '1',
@@ -69,15 +72,23 @@ export class PatientRecord {
             null,
             [null, null]
         ];
-    }
-    cargarPatientRecord(protocol) {
-        this.setName(protocol.paciente);
-        this.setBirthdate(protocol.anioNacimiento);
-        this.setSex(protocol.sexo);
-    }
-    cargarPatientDesdeASTM(record) {
-        let field = record.split(FIELD_SEP);
+    };
+    PatientRecord.prototype.cargarPatientRecord = function (protocol) {
+        this.setName(protocol[0].paciente);
+        this.setBirthdate(protocol[0].anioNacimiento);
+        this.setSex(protocol[0].sexo);
+    };
+    PatientRecord.prototype.cargarPatientDesdeASTM = function (record) {
+        var field = record.split(constants_js_1.FIELD_SEP);
         this.setBirthdate(field[7]);
         this.setSex(field[8]);
-    }
-}
+    };
+    PatientRecord.prototype.toASTM = function () {
+        var pipe = constants_js_1.FIELD_SEP;
+        var astm = "P" + pipe + "1" + pipe + pipe + pipe + pipe + pipe + pipe + pipe + this.getSex();
+        astm = astm + pipe + pipe + pipe + pipe + pipe + pipe + constants_js_1.COMPONENT_SEP + constants_js_1.RECORD_SEP;
+        return astm;
+    };
+    return PatientRecord;
+}());
+exports.PatientRecord = PatientRecord;

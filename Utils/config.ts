@@ -1,6 +1,6 @@
-export const numeroProtocolo : string = 'numeroTipoServicio'; // COMO MEJORA BUSCARLO EN LA BD
+export const numeroProtocolo : string = 'numero'; // COMO MEJORA BUSCARLO EN LA BD
 export const analyzer = 'CobasC311'
-export const idEfector = 40; 
+export const idEfector = 70; 
 export const DBConfig = {
     server : "10.1.62.111",
     user : "testcobas",

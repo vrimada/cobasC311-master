@@ -1,3 +1,5 @@
+import { FIELD_SEP } from "../constants";
+
 /***************************************
 *           TerminationRecord          *
 ****************************************
@@ -42,8 +44,12 @@ export class TerminationRecord{
         this.setSeq(field[1]);
         this.setTerminationCode(field[2]);
     }
-    toASTM() : string [] {
+    toArray() : string [] {
         return ['L', '1', 'N' ];
+    }
+    toASTM() : string{
+        let pipe = FIELD_SEP;
+        return "L" + pipe + "1" + pipe + "N"  ;
     }
 }
 

@@ -1,11 +1,12 @@
 import logger from 'winston';
 import SerialPort from 'serialport';
 // Internal Dependencies
-import { logLevel } from 'Utils/config.js';
-import { ENCODING, ENQ, ACK, NAK, EOT, STX } from 'Utils/constants.js';
-import { isChunkedMessage, encode, decodeMessage } from 'Utils/codec.js';
-import { processResultRecords, composeOrderMessages } from 'Utils/app.js';
-import { getNextProtocolToSend, removeLastProtocolSent, hasProtocolsToSend } from 'Utils/db.js';
+import { logLevel } from './Utils/config';
+import { ENCODING, ENQ, ACK, NAK, EOT, STX } from './Utils/constants';
+import { isChunkedMessage, encode, decodeMessage } from './Utils/codec';
+import { processResultRecords, composeOrderMessages } from './Utils/app';
+import { getNextProtocolToSend, removeLastProtocolSent, hasProtocolsToSend } from './Utils/db';
+import { Records } from './Utils/Records/Records';
 // Init logging
 logger.level = logLevel;
 // Global variables for Client and Server mode
@@ -148,78 +149,67 @@ function discard_input_buffers() {
 // #region ClientMode_envio_datos_de_sil_a_cobas
 ////////////////// CLIENT MODE //////////////////////
 let outputChunks = [];
-let outputMessages = [];
+let outputMessages;
 let retryCounter = 0;
 let lastSendOk = false;
 let lastSendData = "";
 let timer;
 function readDataAsClient(data) {
-    if (data === ENQ) {
-        if (lastSendData === ENQ) {
-            //TODO: Link Contention??
-        }
-        throw new Error('Client should not receive ENQ.');
-    }
-    else if (data === ACK) {
-        logger.debug('ACK Response');
-        lastSendOk = true;
-        try {
-            sendMessage();
-        }
-        catch (error) {
-            logger.debug(error);
-            closeClientSession();
-        }
-        //handlePortWrite(message); //self.push(message)
-        // TODO: Revisar la condicion de abajo
-        // if (message === EOT){
-        // self.openClientSession()
-        // }
-    }
-    else if (data === NAK) {
-        // Handles NAK response from server.
-        // The client tries to repeat last
-        // send for allowed amount of attempts. 
-        logger.debug('NAK Response');
-        if (lastSendData === ENQ) {
-            openClientSession();
-        }
-        else {
+    switch (data) {
+        case ENQ:
+            throw new Error('Client should not receive ENQ.');
+            break;
+        case ACK:
+            logger.debug('ACK Response');
+            lastSendOk = true;
             try {
-                lastSendOk = false;
                 sendMessage();
             }
             catch (error) {
+                logger.debug(error);
                 closeClientSession();
             }
-        }
-        // TODO: Revisar la condicion de abajo
-        // if message == EOT:
-        // self.openClientSession()
-    }
-    else if (data === EOT) {
-        isTransferState = false;
-        throw new Error('Client should not receive EOT.');
-    }
-    else if (data.startsWith(STX)) {
-        isTransferState = false;
-        throw new Error('Client should not receive ASTM message.');
-    }
-    else {
-        throw new Error('Invalid data.');
+            break;
+        case NAK: // Handles NAK response from server.
+            // The client tries to repeat last send for allowed amount of attempts. 
+            logger.debug('NAK Response');
+            if (lastSendData === ENQ) {
+                openClientSession();
+            }
+            else {
+                try {
+                    lastSendOk = false;
+                    sendMessage();
+                }
+                catch (error) {
+                    closeClientSession();
+                }
+            }
+            break;
+        case EOT:
+            isTransferState = false;
+            throw new Error('Client should not receive EOT.');
+            break;
+        case (data.startsWith(STX) ? 'STX' : ''):
+            isTransferState = false;
+            throw new Error('Client should not receive ASTM message.');
+            break;
+        default:
+            throw new Error('Invalid data.');
+            break;
     }
 }
 function prepareMessagesToSend(protocol) {
-    outputMessages = [];
+    outputMessages = new Records();
     outputMessages = composeOrderMessages(protocol);
 }
 function prepareNextEncodedMessage() {
     outputChunks = [];
-    outputChunks = encode(outputMessages.shift());
+    outputChunks = encode(outputMessages);
 }
 function sendMessage() {
     if (lastSendData === ENQ) {
-        if (outputMessages.length > 0) {
+        if (outputMessages) {
             // Still exists messages to send
             prepareNextEncodedMessage();
             sendData();
@@ -263,12 +253,11 @@ function sendData() {
         }
         else {
             closeClientSession();
-            if (outputMessages.length > 0) {
+            if (outputMessages) {
                 openClientSession();
             }
             else {
                 removeLastProtocolSent();
-                // checkDataToSend();
             }
             return;
         }
@@ -310,7 +299,6 @@ function checkDataToSend() {
             }
             else {
                 return;
-                logger.info('Waiting for data to send');
             }
         }
     }, function (err) {

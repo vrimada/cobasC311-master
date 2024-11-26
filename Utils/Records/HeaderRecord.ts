@@ -1,4 +1,4 @@
-import { COMPONENT_SEP, FIELD_SEP } from "../constants.js";
+import { COMPONENT_SEP, FIELD_SEP, RECORD_SEP, REPEAT_SEP, STX } from "../constants.js";
 
 /***************************************
 *             HeaderRecord             *
@@ -49,6 +49,7 @@ export class HeaderRecord{
                 this.tipo = "";
                 this.emisor = "";
                 this.receptor = "";
+                this.mensaje = "";
                 this.proceso = "";
                 this.version = "";
                 this.modoMensaje = "";
@@ -131,8 +132,39 @@ export class HeaderRecord{
                 this.setVersion(field[12]); //Version No.
         }
 
-        toASTM() : (string | string[] | (string | null)[][] | null)[] {
-                return [ this.getTipo(), [ null,'&' ] ,null,null,[ this.getEmisor(), '1' ],null,null,null,null,this.getReceptor(),[ this.getMensaje(), this.getModoMensaje() ],this.getProceso(),this.getVersion()];
+        toArray() : (string | string[] | (string | null)[][] | null)[] {
+                //Si las variables del constructor estan vacias podemos suponer que es porque se esta armando
+                //el mensaje desde el SIL al COBAS
+                return [ 
+                        (this.getTipo() === '' ? 'H' : this.getTipo()),
+                        [ [null], [null,'&'] ],
+                        null,
+                        null,
+                        [(this.getEmisor() === '') ? 'SIL' : this.getEmisor(), '1'],
+                        null,
+                        null,
+                        null,
+                        null,
+                        (this.getReceptor() === '') ? 'CobasC311' : this.getReceptor(),
+                        [(this.getMensaje() === '') ? 'TSDWN' : this.getMensaje(),
+                        (this.getModoMensaje() === '') ? 'BATCH' : this.getModoMensaje()], //estos valores son tomados del record.js original que tenia COBAS en produccion antes de la migracion
+                        (this.getProceso() === '') ? 'P': this.getProceso(),
+                        (this.getVersion() === '') ? '1' : this.getVersion()
+                ];
         }
 
+        toASTM() : string {
+                let astm = "";
+                let pipe = FIELD_SEP;
+                astm += 'H' + pipe; //(1) Record Type ID
+                astm += REPEAT_SEP  + "^&" +  pipe.repeat(3); //(2) Delimiter Definition
+                astm += (this.getEmisor() === '' ? 'host' : this.getEmisor()) + COMPONENT_SEP + '1' + pipe.repeat(5); //(5) Sender Name or ID <Sender‟s device name>^<Communication program version>
+                astm += (this.getReceptor() === '' ? 'cobas c 311' : this.getReceptor()) + pipe; //(10) Receiver ID
+                astm += (this.getMensaje() === '' ? 'TSDWN' : this.getMensaje())+ COMPONENT_SEP; //(11) Comment or Special Instructions
+                astm += (this.getModoMensaje()  === '' ? 'BATCH' : this.getModoMensaje()) + pipe;//(11) Comment or Special Instructions
+                astm += (this.getProceso() === '' ? 'P': this.getProceso()) + pipe;//(12) Processing ID
+                astm += (this.getVersion()  === '' ? '1' : this.getVersion());//(13) Version No.
+                astm += RECORD_SEP; // \r //
+                return astm;
+        }
 }

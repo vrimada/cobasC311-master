@@ -1,3 +1,7 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TerminationRecord = void 0;
+var constants_1 = require("../constants");
 /***************************************
 *           TerminationRecord          *
 ****************************************
@@ -7,32 +11,40 @@
 * |1 => Sequence Number. Indicates sequence No. Normally it is „1‟
 * |N => Termination Code. „N‟ fixed. (normal end)
 **/
-export class TerminationRecord {
-    setType(_type) {
+var TerminationRecord = /** @class */ (function () {
+    function TerminationRecord() {
+    }
+    TerminationRecord.prototype.setType = function (_type) {
         this.type = _type;
-    }
-    getType() {
+    };
+    TerminationRecord.prototype.getType = function () {
         return this.type;
-    }
-    setSeq(_seq) {
+    };
+    TerminationRecord.prototype.setSeq = function (_seq) {
         this.seq = _seq;
-    }
-    getSeq() {
+    };
+    TerminationRecord.prototype.getSeq = function () {
         return this.seq;
-    }
-    getTerminationCode() {
+    };
+    TerminationRecord.prototype.getTerminationCode = function () {
         return this.terminationCode;
-    }
-    setTerminationCode(_ter) {
+    };
+    TerminationRecord.prototype.setTerminationCode = function (_ter) {
         this.terminationCode = _ter;
-    }
-    cargarDesdeASTM(flow) {
-        let field = flow.split('|');
+    };
+    TerminationRecord.prototype.cargarDesdeASTM = function (flow) {
+        var field = flow.split('|');
         this.setType(field[0]);
         this.setSeq(field[1]);
         this.setTerminationCode(field[2]);
-    }
-    toASTM() {
+    };
+    TerminationRecord.prototype.toArray = function () {
         return ['L', '1', 'N'];
-    }
-}
+    };
+    TerminationRecord.prototype.toASTM = function () {
+        var pipe = constants_1.FIELD_SEP;
+        return "L" + pipe + "1" + pipe + "N";
+    };
+    return TerminationRecord;
+}());
+exports.TerminationRecord = TerminationRecord;

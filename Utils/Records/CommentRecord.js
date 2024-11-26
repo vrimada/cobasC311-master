@@ -1,3 +1,4 @@
+"use strict";
 /***************************************
 *              CommentRecord           *
 ****************************************
@@ -11,61 +12,105 @@
 *    If there is no comment, „^^^^‟ is needed to send using with no comment mode.
 * |G => Comment Type. “G” fixed.
 **/
-import { FIELD_SEP } from "../constants.js";
-export class CommentRecord {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CommentRecord = void 0;
+var constants_1 = require("../constants");
+var CommentRecord = /** @class */ (function () {
+    function CommentRecord() {
+        this.fixed = "";
+        this.sequence = "";
+        this.fuente = "";
+        this.type = "";
+        this.comentarios = new Array;
+    }
     // #region GetterSetter
-    getFixed() {
+    CommentRecord.prototype.getFixed = function () {
         return this.fixed;
-    }
-    setFixed(_fixed) {
+    };
+    CommentRecord.prototype.setFixed = function (_fixed) {
         this.fixed = _fixed;
-    }
-    getFuente() {
+    };
+    CommentRecord.prototype.getFuente = function () {
         return this.fuente;
-    }
-    setFuente(_fuente) {
+    };
+    CommentRecord.prototype.setFuente = function (_fuente) {
         this.fuente = _fuente;
-    }
-    getTexto() {
-        return this.texto;
-    }
-    setTexto(_texto) {
-        this.texto = _texto;
-    }
-    getType() {
+    };
+    CommentRecord.prototype.getComentarios = function () {
+        return this.comentarios;
+    };
+    CommentRecord.prototype.setComentarios = function (_texto) {
+        this.comentarios = _texto;
+    };
+    CommentRecord.prototype.getType = function () {
         return this.type;
-    }
-    setType(_type) {
+    };
+    CommentRecord.prototype.setType = function (_type) {
         this.type = _type;
-    }
-    setSequence(arg0) {
+    };
+    CommentRecord.prototype.setSequence = function (arg0) {
         this.sequence = arg0;
-    }
-    getSequence() {
+    };
+    CommentRecord.prototype.getSequence = function () {
         return this.sequence;
-    }
+    };
     // #endregion
-    //Metodo que lee el mensaje de cobas y 
-    cargarOrderDesdeASTM(flow) {
-        let field = flow.split(FIELD_SEP);
+    //Metodo que lee el mensaje de cobas  
+    CommentRecord.prototype.cargarOrderDesdeASTM = function (flow) {
+        var field = flow.split(constants_1.FIELD_SEP);
         this.setFixed(field[0]);
         this.setSequence(field[1]);
         this.setFuente(field[2]);
-        this.setTexto(field[3]);
+        var comentarios = field[3].split(constants_1.COMPONENT_SEP);
+        var comentArray = new Array;
+        comentarios.forEach(function (coment) {
+            comentArray.push(coment);
+        });
+        this.setComentarios(comentArray);
         this.setType(field[4]);
-    }
-    toASTM() {
+    };
+    CommentRecord.prototype.toArray = function () {
         return ['C', '1', 'L',
             ['                              ', '                         ', '                    ', '               ', '          '],
             'G'];
-    }
-    toASTM2() {
+    };
+    CommentRecord.prototype.toArray2 = function () {
         return [
-            this.getFixed(), //Record Type ID - C‟ fixed.
-            this.getSequence(), //Sequence Number
-            this.getFuente(), //Comment Source - If comment is sent from Host, "L" is displayed. If comment is send from analyzer, "I" is displayed.
-            this.getTexto(), //Comment Text
-            this.getType() //Comment Type
+            (this.getFixed() === '' ? 'C' : this.getFixed()), //Record Type ID - C‟ fixed.
+            (this.getSequence() === '' ? '1' : this.getSequence()), //Sequence Number
+            (this.getFuente() === '' ? 'L' : this.getFuente()), //Comment Source - If comment is sent from Host, "L" is displayed. If comment is send from analyzer, "I" is displayed.
+            (this.getComentarios().length === 0 ? ['                              ', '                         ', '                    ', '               ', '          ']
+                : [this.getComentarios().shift()]), //Comment Text
+            (this.getType() === '' ? 'G' : this.getType()) //Comment Type
         ];
-    }
-}
+    };
+    CommentRecord.prototype.toASTM = function () {
+        var pipe = constants_1.FIELD_SEP;
+        var astm = "";
+        var rep = constants_1.COMPONENT_SEP;
+        var comentarios = "";
+        if (this.getComentarios().length === 0) {
+            var Comment1 = ' '.repeat(30); // Comment1 30 ST
+            var Comment2 = ' '.repeat(25); // Comment2 25 ST
+            var Comment3 = ' '.repeat(20); // Comment3 20 ST
+            var Comment4 = ' '.repeat(15); // Comment4 15 ST
+            var Comment5 = ' '.repeat(10); // Comment5 10 ST
+            comentarios = Comment1 + rep + Comment2 + rep + Comment3 + rep + Comment4 + rep + Comment5;
+        }
+        else {
+            var com = this.getComentarios();
+            com.forEach(function (elemento) {
+                comentarios += elemento + rep;
+            });
+            comentarios = comentarios.substring(0, comentarios.length - 1);
+        }
+        astm = astm + 'C' + pipe; //Record Type ID: *C* Fixed
+        astm = astm + (this.getSequence() === '' ? '1' : this.getSequence()) + pipe;
+        astm = astm + (this.getFuente() === '' ? 'L' : this.getFuente()) + pipe;
+        astm = astm + comentarios + pipe;
+        astm = astm + 'G' + constants_1.RECORD_SEP; //Comment Type: FIxed G
+        return astm;
+    };
+    return CommentRecord;
+}());
+exports.CommentRecord = CommentRecord;

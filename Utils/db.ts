@@ -1,9 +1,9 @@
 let { logger } = require('winston');
 let { sql } = require("seriate");
 
-import { ResultRecord }  from './Records/ResultRecord.js';
-import { OrderRecord } from './Records/OrderRecord.js';
-import { DBConfig, analyzer, idEfector } from './config.js';
+import { ResultRecord }  from './Records/ResultRecord';
+import { OrderRecord } from './Records/OrderRecord';
+import { DBConfig, analyzer, idEfector } from './config';
 
 // SQL Server config settings
 sql.setDefaultConfig(DBConfig);

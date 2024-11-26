@@ -1,6 +1,6 @@
 let { logger } = require('winston');
 let { sql } = require("seriate");
-import { DBConfig, analyzer, idEfector } from './config.js';
+import { DBConfig, analyzer, idEfector } from './config';
 // SQL Server config settings
 sql.setDefaultConfig(DBConfig);
 //Guarda los resultados un item del Cobas al SIL

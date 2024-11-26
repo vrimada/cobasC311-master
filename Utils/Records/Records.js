@@ -1,66 +1,85 @@
-import { CommentRecord } from "./CommentRecord.js";
-import { HeaderRecord } from "./HeaderRecord.js";
-import { OrderRecord } from "./OrderRecord.js";
-import { PatientRecord } from "./PatientRecord.js";
-import { TerminationRecord } from "./TerminationRecord.js";
-export class Records {
-    constructor() {
-        this.header = new HeaderRecord();
-        this.patient = new PatientRecord();
-        this.orden = new OrderRecord();
-        this.comentarios = new CommentRecord();
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Records = void 0;
+var constants_1 = require("../constants");
+var CommentRecord_1 = require("./CommentRecord");
+var HeaderRecord_1 = require("./HeaderRecord");
+var OrderRecord_1 = require("./OrderRecord");
+var PatientRecord_1 = require("./PatientRecord");
+var TerminationRecord_1 = require("./TerminationRecord");
+var Records = /** @class */ (function () {
+    function Records() {
+        this.header = new HeaderRecord_1.HeaderRecord();
+        this.patient = new PatientRecord_1.PatientRecord();
+        this.orden = new OrderRecord_1.OrderRecord();
+        this.comentarios = new CommentRecord_1.CommentRecord();
         this.resultados = new Array();
-        this.termination = new TerminationRecord();
+        this.termination = new TerminationRecord_1.TerminationRecord();
     }
     // #region GetterSetter
-    getHeader() {
+    Records.prototype.getHeader = function () {
         return this.header;
-    }
-    setHeader(_header) {
+    };
+    Records.prototype.setHeader = function (_header) {
         this.header = _header;
-    }
-    getOrden() {
+    };
+    Records.prototype.getOrden = function () {
         return this.orden;
-    }
-    setOrden(_order) {
+    };
+    Records.prototype.setOrden = function (_order) {
         this.orden = this.orden;
-    }
-    getPaciente() {
+    };
+    Records.prototype.getPaciente = function () {
         return this.patient;
-    }
-    setPaciente(_paciente) {
+    };
+    Records.prototype.setPaciente = function (_paciente) {
         this.patient = _paciente;
-    }
-    getComentarios() {
+    };
+    Records.prototype.getComentarios = function () {
         return this.comentarios;
-    }
-    setComentarios(_comentarios) {
+    };
+    Records.prototype.setComentarios = function (_comentarios) {
         this.comentarios = _comentarios;
-    }
-    getResultados() {
+    };
+    Records.prototype.getResultados = function () {
         return this.resultados;
-    }
-    setResultados(_resultados) {
+    };
+    Records.prototype.setResultados = function (_resultados) {
         this.resultados = _resultados;
-    }
-    getTermination() {
+    };
+    Records.prototype.getTermination = function () {
         return this.termination;
-    }
-    setTermination(_termination) {
+    };
+    Records.prototype.setTermination = function (_termination) {
         this.termination = _termination;
-    }
+    };
     // #endregion
-    toASTM() {
-        return [this.header.toASTM(), this.patient.toASTM(), this.orden.toASTM(), this.comentarios.toASTM(), this.termination.toASTM()];
-    }
-    toString() {
-        return "[" +
-            "[" + this.header.toString() + "]" + '\x0D' +
-            "[" + this.patient.toString() + "]" + '\x0D' +
-            "[" + this.orden.toString() + "]" + '\x0D' +
-            "[" + this.comentarios.toString() + "]" + '\x0D' +
-            "[" + this.resultados.toString() + "]" + '\x0D' +
-            "[" + this.termination.toString() + "]" + '\x0D'
-            + "]";
-    }
-}
+    Records.prototype.toArray = function () {
+        return [this.header.toArray(), this.patient.toArray(), this.orden.toArray(), this.comentarios.toArray(), this.termination.toArray()];
+    };
+    Records.prototype.toASTM = function () {
+        var _resultados = "";
+        if (this.resultados.length !== 0) {
+            var resultados = this.getResultados();
+            // console.dir(resultados);
+            resultados.forEach(function (r) {
+                _resultados += r.toASTM() + constants_1.RECORD_SEP;
+            });
+        }
+        var header = this.getHeader().toASTM();
+        // console.log("header "+header.toString());
+        var paciente = this.getPaciente().toASTM();
+        //console.log("paciente "+paciente);
+        var orden = this.getOrden().toASTM();
+        // console.log("orden " + orden);
+        var comentarios = this.getComentarios().toASTM();
+        // console.log("comentarios "+comentarios);
+        var _ter = this.getTermination().toASTM();
+        //console.log("termination " +_ter);
+        //final = `${header} ${paciente} ${orden} ${comentarios} ${result} ${termination}`
+        var final = [header, paciente, orden, _resultados, comentarios, _ter].join('');
+        return final;
+    };
+    return Records;
+}());
+exports.Records = Records;

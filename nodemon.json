@@ -1,0 +1,9 @@
+{
+    "watch": ".",
+    "ignore": [
+        "node_modules"
+    ],
+    "exec": "tsc && node dist/protocol.js",
+    "ext": "ts",
+    "delay": "2500"
+}

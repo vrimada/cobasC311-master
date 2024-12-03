@@ -14,6 +14,11 @@ export class TerminationRecord{
     private seq : string;
     private terminationCode : string;
 
+    constructor(){
+        this.type = "";
+        this.seq = "";
+        this.terminationCode = "";
+    }
     public setType(_type : string){
         this.type = _type;
     }

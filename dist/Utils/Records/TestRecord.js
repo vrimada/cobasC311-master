@@ -7,19 +7,18 @@ exports.TestRecord = void 0;
 * Use only for OrderRecord
 *
 **/
-var TestRecord = /** @class */ (function () {
-    function TestRecord(id) {
+class TestRecord {
+    constructor(id) {
         this._id = id;
     }
-    TestRecord.prototype.getId = function () {
+    getId() {
         return this._id;
-    };
-    TestRecord.prototype.setId = function (id) {
+    }
+    setId(id) {
         this._id = id;
-    };
-    TestRecord.prototype.toString = function () {
+    }
+    toString() {
         return "id " + this._id;
-    };
-    return TestRecord;
-}());
+    }
+}
 exports.TestRecord = TestRecord;

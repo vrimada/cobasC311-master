@@ -27,34 +27,34 @@ Explicación de los conceptos del ejemplo:
 **/
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PatientRecord = void 0;
-var constants_js_1 = require("../constants.js");
-var PatientRecord = /** @class */ (function () {
-    function PatientRecord() {
+const constants_js_1 = require("../constants.js");
+class PatientRecord {
+    constructor() {
         this._sex = "";
         this._name = "";
         this._birthdate = "";
     }
     // #region GetterSetter
-    PatientRecord.prototype.getSex = function () {
+    getSex() {
         return this._sex;
-    };
-    PatientRecord.prototype.setSex = function (sex) {
+    }
+    setSex(sex) {
         this._sex = sex;
-    };
-    PatientRecord.prototype.getName = function () {
+    }
+    getName() {
         return this._name;
-    };
-    PatientRecord.prototype.setName = function (name) {
+    }
+    setName(name) {
         this._name = name;
-    };
-    PatientRecord.prototype.getBirthdate = function () {
+    }
+    getBirthdate() {
         return this._birthdate;
-    };
-    PatientRecord.prototype.setBirthdate = function (birthdate) {
+    }
+    setBirthdate(birthdate) {
         this._birthdate = birthdate;
-    };
+    }
     // #endregion
-    PatientRecord.prototype.toArray = function () {
+    toArray() {
         return [
             'P',
             '1',
@@ -72,23 +72,22 @@ var PatientRecord = /** @class */ (function () {
             null,
             [null, null]
         ];
-    };
-    PatientRecord.prototype.cargarPatientRecord = function (protocol) {
-        this.setName(protocol[0].paciente);
-        this.setBirthdate(protocol[0].anioNacimiento);
-        this.setSex(protocol[0].sexo);
-    };
-    PatientRecord.prototype.cargarPatientDesdeASTM = function (record) {
-        var field = record.split(constants_js_1.FIELD_SEP);
+    }
+    cargarPatientRecord(protocol) {
+        this.setName(protocol.getPaciente());
+        this.setBirthdate(protocol.getAnioNacimiento());
+        this.setSex(protocol.getSexo());
+    }
+    cargarPatientDesdeASTM(record) {
+        let field = record.split(constants_js_1.FIELD_SEP);
         this.setBirthdate(field[7]);
         this.setSex(field[8]);
-    };
-    PatientRecord.prototype.toASTM = function () {
-        var pipe = constants_js_1.FIELD_SEP;
-        var astm = "P" + pipe + "1" + pipe + pipe + pipe + pipe + pipe + pipe + pipe + this.getSex();
+    }
+    toASTM() {
+        let pipe = constants_js_1.FIELD_SEP;
+        let astm = "P" + pipe + "1" + pipe + pipe + pipe + pipe + pipe + pipe + pipe + this.getSex();
         astm = astm + pipe + pipe + pipe + pipe + pipe + pipe + constants_js_1.COMPONENT_SEP + constants_js_1.RECORD_SEP;
         return astm;
-    };
-    return PatientRecord;
-}());
+    }
+}
 exports.PatientRecord = PatientRecord;

@@ -1,140 +1,170 @@
-import logger from 'winston';
-import SerialPort from 'serialport';
+import winston from 'winston';
+import { SerialPort } from 'serialport';
+import { Buffer } from 'node:buffer';
 
 // Internal Dependencies
-import { logLevel }  from './Utils/config';
+import { comPort  }  from './config';
 import { ENCODING, ENQ, ACK, NAK, EOT, STX } from './Utils/constants';
 import { isChunkedMessage, encode, decodeMessage } from './Utils/codec';
 import { processResultRecords, composeOrderMessages } from './Utils/app'
-import { getNextProtocolToSend, removeLastProtocolSent, hasProtocolsToSend  } from './Utils/db';
+import { traerProximoProtocolParaEnviar, removeLastProtocolSent, tieneProtocolosParaEnviar  } from './Utils/db';
 import { Records } from './Utils/Records/Records';
+import { TempProtocoloEnvio } from './Utils/TempProtocoloEnvio';
 
-// Init logging
-logger.level = logLevel;
 
 // Global variables for Client and Server mode
 let isTransferState = false;
 let isClientMode = false;
-let port = null; // COM Port Communication
+let port : SerialPort; // COM Port Communication
+let logger : winston.Logger;
+iniciar();
 
-init();
-
-function init() : void {
-    SerialPort.list(function (err, ports) {
-        initPort(err, ports);
-    });
+function iniciar() : void {
+    iniciarLog();
+    //baudRate 9600 es la recomendada segun el PDF de COBAS
+    //path es el nombre del puerto que esta configurado en config con el nombre comPort
+   port = new SerialPort({ path: comPort, baudRate: 9600}); 
+   iniciarPuerto(port);
 }
 
-function initPort(err : string, ports) : void {
-    let portNumber = ports[0].comName;
-    port = new SerialPort(portNumber);
-    port.on('open', handlePortOpen);
-    port.on('close', handlePortClose);
-    port.on('data', handlePortData);
+function iniciarLog(){// Para crear los logs
+    logger = winston.createLogger({
+    level: 'info',
+    format:
+        winston.format.combine(
+        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), // Formato de la fecha
+        winston.format.printf(({ timestamp, level, message }) => {
+          return `${timestamp} [${level}]: ${message}`; // Combina la fecha, nivel y mensaje
+        })
+      ),
+    transports: [
+      new winston.transports.File({ filename: 'Log-protocol-error.log', level: 'error' }),// - Write all logs with importance level of `error` or higher to `error.log`
+      new winston.transports.File({ filename: 'Log-protocol-info.log' }),// - Write all logs with importance level of `info` 
+    ],
+  });
+  
+}
+
+function iniciarPuerto(port : SerialPort ): void {
+    port.on('open', gestionarPuertoAbierto);
+    port.on('close', gestionarPuertoCerrado);
+    port.on('data', gestionarPuertoDatos);
     port.on('error', function (err) {
         logger.error(err.message);
         throw new Error('Port Error: ' + err.message);
-    })
+    });
 }
 
-function handlePortOpen() : void {
-    logger.info('Port open. Data rate: ' + port.options.baudRate);
-    logger.info('Data Bits.: ' + port.options.dataBits);
-    logger.info('Parity.: ' + port.options.parity);
-    logger.info('Stop bit.: ' + port.options.stopBits);
+function gestionarPuertoAbierto() : void {
+    logger.info('Port open. Data rate: ' + port.baudRate);
+    logger.info('Port Path: ' + port.path);
 }
 
-function handlePortClose() : void {
+function gestionarPuertoCerrado() : void {
     logger.info('Port Closed.');
 }
 
-function handlePortWrite(data) : void {
+function gestionarPuertoParaEscribir(data : string | undefined) : void {
     logger.info(data);
     port.write(data);
-    initTimer();
+    iniciarTimer();
 }
 
-function handlePortData(data) : void {
+function gestionarPuertoDatos(data : Buffer) : void {
     logger.info(data); // Raw Buffer Data
-    data = data.toString(ENCODING);
+    let buf : string = data.toString('ascii');
+    //logger.info(buf); // Raw Buffer Data toString
 
     if (isTransferState) {
         if (isClientMode) {
-            readDataAsClient(data);
+            leerDatosComoCliente(buf);
         }
         else {
-            readDataAsServer(data);
+            readDataAsServer(buf);
         }
     }
     else {
-        readDataAsServer(data);
+        readDataAsServer(buf);
     }
 }
 
 // #region ServerMode_envio_datos_de_cobas_a_sil
 ////////////////// SERVER MODE //////////////////////
 
-let inputChunks = [];
+let inputChunks : string[] = [];
 
-function readDataAsServer(data) : void {
-    let response = '';
+function readDataAsServer(data : string) : void {
+    let response : string = '';
 
-    if (data === ENQ) {
-        logger.info('Request: ENQ');
-        if (!isTransferState) {
-            isTransferState = true;
-            response = ACK;
-        }
-        else {
-            logger.error('ENQ is not expected. Transfer state already.');
-            response = NAK;
-        }
-    }
-    else if (data === ACK) {
-        logger.error('ACK is not expected.');
-        throw new Error('ACK is not expected.');
-    }
-    else if (data === NAK) {
-        logger.error('NAK is not expected.');
-        throw new Error('NAK is not expected.');
-    }
-    else if (data === EOT) {
-        if (isTransferState) {
-            isTransferState = false;
-            logger.info('EOT accepted. OK');
-        }
-        else {
-            logger.error('Not ready to accept EOT message.');
-            throw new Error('Not ready to accept EOT message.');
-        }
-    }
-    else if (data.startsWith(STX)) {
-        if (!isTransferState) {
-            discard_input_buffers();
-            logger.error('Not ready to accept messages');
-            response = NAK;
-        }
-        else {
-            try {
-                logger.info('Accept message.Handling message');
-                handleMessage(data);
+    switch(data){
+        case ENQ:{
+            logger.info('Request: ENQ');
+            if (!isTransferState) {
+                isTransferState = true;
                 response = ACK;
             }
-            catch (err) {
-                logger.error('Error occurred on message handling.' + err)
+            else {
+               
+                logger.error(' ENQ is not expected. Transfer state already.');
                 response = NAK;
             }
-        }
-    }
-    else {
-        logger.error('Invalid data.');
-        throw new Error('Invalid data.');
-    }
+        } break;
 
-    handlePortWrite(response);
+        case ACK: {
+           
+            logger.error(' ACK is not expected.');
+            throw new Error('ACK is not expected.');
+        } break;
+
+        case NAK: {
+           
+            logger.error(' NAK is not expected.');
+            throw new Error('NAK is not expected.');
+        } break;
+
+        case EOT: {
+            if (isTransferState) {
+                isTransferState = false;
+                logger.info('EOT accepted. OK');
+            }
+            else {
+               
+                logger.error(' Not ready to accept EOT message.');
+                throw new Error('Not ready to accept EOT message.');
+            }
+        } break;
+        
+        default: 
+            if (data.startsWith(STX)) {
+                if (!isTransferState) {
+                    discard_input_buffers();
+                   
+                    logger.error(' Not ready to accept messages');
+                    response = NAK;
+                }
+                else {
+                    try {
+                        logger.info('Accept message.Handling message');
+                        handleMessage(data);
+                        response = ACK;
+                    }
+                    catch (err) {
+                       
+                        logger.error(' Error occurred on message handling.' + err)
+                        response = NAK;
+                    }
+                }
+            }
+            else {
+               
+                logger.error(' Invalid data.');
+                throw new Error('Invalid data.');
+            }break;
+       }
+    gestionarPuertoParaEscribir(response);
 };
 
-function handleMessage(message) {
+function handleMessage(message : string) {
     if (isChunkedMessage(message)) {
         logger.debug('handleMessage: Is chunked transfer.');
         inputChunks.push(message);
@@ -152,7 +182,6 @@ function handleMessage(message) {
 }
 
 function dispatchMessage(message : string, enconding?: string) {
-    console.log(message);
     logger.info(message);
 
     // Pasa el mensaje de Cobas al tipo Records
@@ -172,17 +201,18 @@ function discard_input_buffers() {
 // #region ClientMode_envio_datos_de_sil_a_cobas
 ////////////////// CLIENT MODE //////////////////////
 
-let outputChunks = [];
+let outputChunks : string[] = [];
 let outputMessages : Records;
-let retryCounter = 0;
-let lastSendOk = false;
-let lastSendData = "";
-let timer;
+let retryCounter : number = 0;
+let lastSendOk : boolean = false;
+let lastSendData : string | undefined = "";
+let timer : NodeJS.Timeout;
 
-function readDataAsClient(data : string) {
-
+function leerDatosComoCliente(data : string) {
     switch(data){
-        case ENQ : throw new Error('Client should not receive ENQ.'); break;
+        case ENQ : 
+            logger.error(' Client should not receive ENQ.');
+            throw new Error('Client should not receive ENQ.'); break;
         case ACK :
             logger.debug('ACK Response');
             lastSendOk = true;
@@ -190,15 +220,15 @@ function readDataAsClient(data : string) {
                 sendMessage();
             }
             catch (error) {
-                logger.debug(error);
-                closeClientSession();
+                logger.error(' '+error);
+                cerrarSesionDelCliente();
             }
         break;
         case NAK : // Handles NAK response from server.
         // The client tries to repeat last send for allowed amount of attempts. 
         logger.debug('NAK Response');
         if (lastSendData === ENQ) {
-            openClientSession();
+            abrirSesionDelCliente();
         }
         else {
             try {
@@ -206,34 +236,35 @@ function readDataAsClient(data : string) {
                 sendMessage();
             }
             catch (error) {
-                closeClientSession();
+                cerrarSesionDelCliente();
             }
         }
         break;
 
         case EOT:
             isTransferState = false;
+            logger.error('Client should not receive EOT.');
             throw new Error('Client should not receive EOT.');
         break;
 
         case (data.startsWith(STX) ? 'STX' : ''):
             isTransferState = false;
+            logger.error('Client should not receive ASTM message.');
             throw new Error('Client should not receive ASTM message.');
         break;
 
-        default :throw new Error('Invalid data.'); break;
+        default :
+        logger.error('Invalid data.');
+        throw new Error('Invalid data.'); break;
     }
-    
-   
-   
 }
 
-function prepareMessagesToSend(protocol) {
+function prepararMensajesAEnviar(protocol : TempProtocoloEnvio) {
     outputMessages = new Records();
     outputMessages = composeOrderMessages(protocol);
 }
 
-function prepareNextEncodedMessage() {
+function prepararMensajesParaCodificar() {
     outputChunks = [];
     outputChunks  = encode(outputMessages);
 }
@@ -242,31 +273,35 @@ function sendMessage() {
     if (lastSendData === ENQ) {
         if (outputMessages) {
             // Still exists messages to send
-            prepareNextEncodedMessage();
-            sendData();
+            prepararMensajesParaCodificar();
+            enviarDatos();
         }
         else {
-            getNextProtocolToSend().then(function (results) {
-                for (let i = 0; i < results.length; i++) { // Always only 1 iteration
-                    let protocol = results[i];
-                    prepareMessagesToSend(protocol)
-                    prepareNextEncodedMessage();
-                    sendData();
+           
+            traerProximoProtocolParaEnviar().then(function (row : any) {
+                if(row){ 
+                    let protocol  : TempProtocoloEnvio = new TempProtocoloEnvio();
+                    protocol.cargar(row);
+                    prepararMensajesAEnviar(protocol)
+                    prepararMensajesParaCodificar();
+                    enviarDatos();
+                }else{
+                    logger.error(" Something bad happened: No levanto los datos de la base de datos");
                 }
             }, function (err) {
-                logger.error("Something bad happened:", err);
+                logger.error(" Something bad happened:", err);
             });
         }
     }
     else {
-        sendData();
+        enviarDatos();
     }
 }
 
-function sendData() {
+function enviarDatos() {
     if (!lastSendOk) {
         if (retryCounter > 6) {
-            closeClientSession();
+            cerrarSesionDelCliente();
             if (lastSendData !== ENQ) {
                 // Remove last protocol to send to prevent future problems with 
                 // the same protocol
@@ -284,78 +319,77 @@ function sendData() {
             lastSendData = outputChunks.shift();
         }
         else {
-            closeClientSession();
+            cerrarSesionDelCliente();
             if (outputMessages) {
-                openClientSession();
+                abrirSesionDelCliente();
             }
             else {
                 removeLastProtocolSent();
             }
-
             return;
         }
     }
-    handlePortWrite(lastSendData);
+    gestionarPuertoParaEscribir(lastSendData);
 }
 
 
-function openClientSession() {
+function abrirSesionDelCliente() {
     logger.info('Open Client Session');
     retryCounter = retryCounter + 1;
     if (retryCounter > 6) {
-        logger.error('Exceed number of retries');
-        closeClientSession();
+       
+        logger.error(' Exceed number of retries');
+        cerrarSesionDelCliente();
     }
     else {
-        handlePortWrite(ENQ);
+        gestionarPuertoParaEscribir(ENQ);
         lastSendData = ENQ;
         isTransferState = true;
         isClientMode = true;
     }
 }
 
-function closeClientSession() {
+function cerrarSesionDelCliente() {
     logger.debug('Close Client Session');
-    handlePortWrite(EOT);
+    gestionarPuertoParaEscribir(EOT);
     isTransferState = false;
     isClientMode = false;
     retryCounter = 0;
 }
 
-function checkDataToSend() {
-    hasProtocolsToSend().then(function (results) {
+function verificarDataAEnviar() {
+    tieneProtocolosParaEnviar().then(function (results : any) {
         if (results[0].total > 0) {
             logger.info("Exist data to send");
             if (!isClientMode) {
-                openClientSession();
+                abrirSesionDelCliente();
             }
-        }
-        else {
+        }else {
             if (isClientMode) {
                 isClientMode = false;
-            }
-            else {
+            }else {
                 return;
             }
         }
-    }, function (err) {
-        logger.error("Something bad happened:", err);
+    }, function (err : any) {
+        logger.error(" Something bad happened:", err);
     });
 }
 
-function initTimer() {
+function iniciarTimer() {
     clearTimeout(timer);
     timer = setTimeout(timeoutCommunication, 5000);
 }
 
 function timeoutCommunication() {
     if (isTransferState) {
+        logger.error(' Timeout Communication');
         throw new Error('Timeout Communication');
     }
 }
 
 function runIntervalCheck() {
-    setInterval(checkDataToSend, 10000);
+    setInterval(verificarDataAEnviar, 10000);
 };
 
 

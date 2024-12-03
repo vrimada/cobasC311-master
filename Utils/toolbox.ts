@@ -70,13 +70,13 @@ function LZ(x : number) : string {
 // It is recommended that you trim whitespace around the value before
 // passing it to this function, as whitespace is NOT ignored!
 // ------------------------------------------------------------------
-function isDate(val : string, format : string) {
+/*function isDate(val : string, format : string) {
 	let date : Date = getDateFromFormat(val,format);
 	if (date == null) {
 		 return false;
 		}
 	return true;
-}
+}*/
 
 // -------------------------------------------------------------------
 // compareDates(date1,date1format,date2,date2format)
@@ -86,7 +86,7 @@ function isDate(val : string, format : string) {
 //   0 if date2 is greater than date1 of if they are the same
 //  -1 if either of the dates is in an invalid format
 // -------------------------------------------------------------------
-function compareDates(date1 : string, dateformat1 : string, date2 : string, dateformat2 : string) : number {
+/*function compareDates(date1 : string, dateformat1 : string, date2 : string, dateformat2 : string) : number {
 	let d1 : Date = getDateFromFormat(date1,dateformat1);
 	let d2 : Date = getDateFromFormat(date2,dateformat2);
 	if (d1 == null || d2 == null) {
@@ -96,32 +96,35 @@ function compareDates(date1 : string, dateformat1 : string, date2 : string, date
 		return 1;
 	}
 	return 0;
-}
+}*/
 
 // ------------------------------------------------------------------
 // formatDate (date_object, format)
 // Returns a date in the output format specified.
 // The format string uses the same abbreviations as in getDateFromFormat()
 // ------------------------------------------------------------------
-export function formatDate(date : Date, format : string) : string {
-	format = format + ""; //yyyyMMddHHmmss
+export function formatDate(date : Date, format? : string) : string {
+	
 	let result : string = "";
-	let i_format : number = 0;
-	let c : string = "";
-	let token : string = "";
 	let y : number = date.getFullYear();
 	let M : number = date.getMonth() + 1;
 	let d : number = date.getDate();
-	let E : number = date.getDay();
 	let H : number = date.getHours();
 	let m : number = date.getMinutes();
 	let s : number = date.getSeconds();
 	
+	result = [y, LZ(M), LZ(d),LZ(H), LZ(m), LZ(s)].join('');
 
-	// Convert real date parts into formatted versions
-	let value : Object = new Object();
 	
-	value["y"] = y;
+	
+	
+	/* 
+	// Convert real date parts into formatted versions
+	format = format + ""; //yyyyMMddHHmmss
+	let value : Object = new Object();value["y"] = y;
+	let token : string = "";
+	let i_format : number = 0;
+	let c : string = "";
 	value["yyyy"] = y;
 	value["yy"] = y % 100;
 	value["M"] = M;
@@ -169,6 +172,8 @@ export function formatDate(date : Date, format : string) : string {
 	value["s"] = s;
 	value["ss"] = LZ(s);
 
+
+
 	while (i_format < format.length) {
 		c = format.charAt(i_format);
 		token = "";
@@ -181,8 +186,10 @@ export function formatDate(date : Date, format : string) : string {
 		else {
 			 result = result + token;
 		   }
-	}
+	}*/
 
+	
+	
 	return result;
 }
 	
@@ -199,7 +206,7 @@ function _isInteger(val : string) : boolean {
 	return true;
 }
 
-function _getInt(str : string, i : number, minlength : number, maxlength : number) : number{
+/*function _getInt(str : string, i : number, minlength : number, maxlength : number) : number{
 	for (let x = maxlength; x >= minlength; x--) {
 		let token  = str.substring(i, i+x);
 
@@ -212,7 +219,7 @@ function _getInt(str : string, i : number, minlength : number, maxlength : numbe
 		
 	}
 	return null;
-}
+}*/
 	
 // ------------------------------------------------------------------
 // getDateFromFormat( date_string , format_string )
@@ -221,14 +228,14 @@ function _getInt(str : string, i : number, minlength : number, maxlength : numbe
 // If the date string matches the format string, it returns the 
 // getTime() of the date. If it does not match, it returns 0.
 // ------------------------------------------------------------------
-function getDateFromFormat(val : string, format : string) : Date {
+/*function getDateFromFormat(val : string, format : string) : Date {
 	val = val + "";
 	format = format + ""; 
 	let i_val : number = 0;
 	let i_format : number = 0;
 	let c : string	= "";
 	let token : string = "";
-	let x : number , y : number;
+	let x : number = 0 , y : number = 0;
 	let now = new Date();
 	let year : number = now.getFullYear();
 	let month : number = now.getMonth()+1;
@@ -237,7 +244,8 @@ function getDateFromFormat(val : string, format : string) : Date {
 	let mm : number = now.getMinutes();
 	let ss : number = now.getSeconds();
 	let ampm : string = "";
-	
+	let newDate : Date = new Date(1900,1,1);
+
 	while (i_format < format.length) {
 		// Get next token from format string
 		c = format.charAt(i_format);
@@ -255,7 +263,7 @@ function getDateFromFormat(val : string, format : string) : Date {
 				if (token=="y")    { x=2;y=4; }
 	
 				year = _getInt(val,i_val,x,y);
-				if (year == null) { return null; }
+				if (year == null) { return newDate; }
 	
 				i_val += year.toString().length;
 	
@@ -281,7 +289,7 @@ function getDateFromFormat(val : string, format : string) : Date {
 								}
 							}
 						}
-					if ((month < 1)||(month>12)){	return null;	}
+					if ((month < 1)||(month>12)){	return newDate;	}
 				}
 				break;
 
@@ -301,7 +309,7 @@ function getDateFromFormat(val : string, format : string) : Date {
 			{
 				month = _getInt(val,i_val,token.length,2);
 				if(month == null || (month<1) || (month>12)){
-						return null;
+						return newDate;
 					}
 				i_val += month.toString().length;
 			}
@@ -311,7 +319,7 @@ function getDateFromFormat(val : string, format : string) : Date {
 			{
 				date = _getInt(val,i_val,token.length,2);
 				if(date==null||(date<1)||(date>31)){
-						return null;
+						return newDate;
 					}
 				i_val += date.toString().length;
 			}
@@ -321,7 +329,7 @@ function getDateFromFormat(val : string, format : string) : Date {
 			{
 				hh = _getInt(val,i_val,token.length,2);
 				if(hh == null || (hh<1) || (hh>12)){
-						return null;
+						return newDate;
 					}
 				i_val+=hh.toString().length;
 			}
@@ -331,7 +339,7 @@ function getDateFromFormat(val : string, format : string) : Date {
 			{
 				hh=_getInt(val,i_val,token.length,2);
 				if(hh==null||(hh<0)||(hh>23)){
-						return null;
+						return newDate;
 					}
 				i_val+=hh.toString().length;
 			}
@@ -340,7 +348,7 @@ function getDateFromFormat(val : string, format : string) : Date {
 			case "KK" : case "K" :
 			{
 				hh=_getInt(val,i_val,token.length,2);
-				if(hh==null||(hh<0)||(hh>11)){	return null;}
+				if(hh==null||(hh<0)||(hh>11)){	return newDate;}
 				i_val+=hh.toString().length;
 			}
 			break;
@@ -348,7 +356,7 @@ function getDateFromFormat(val : string, format : string) : Date {
 			case "kk" : case "k" :
 			{
 				hh=_getInt(val,i_val,token.length,2);
-				if(hh==null||(hh<1)||(hh>24)){	return null;}
+				if(hh==null||(hh<1)||(hh>24)){	return newDate;}
 				i_val+=hh.toString().length;hh--;
 			}
 			break;
@@ -356,7 +364,7 @@ function getDateFromFormat(val : string, format : string) : Date {
 			case "mm" : case "m":
 			{
 				mm=_getInt(val,i_val,token.length,2);
-				if(mm==null||(mm<0)||(mm>59)){	return null;}
+				if(mm==null||(mm<0)||(mm>59)){	return newDate;}
 				i_val+=mm.toString().length;
 			}
 			break;
@@ -364,7 +372,7 @@ function getDateFromFormat(val : string, format : string) : Date {
 			case "ss" : case "s":
 			{
 				ss=_getInt(val,i_val,token.length,2);
-				if(ss==null||(ss<0)||(ss>59)){	return null;}
+				if(ss==null||(ss<0)||(ss>59)){	return newDate;}
 				i_val+=ss.toString().length;
 			}
 			break;
@@ -377,7 +385,7 @@ function getDateFromFormat(val : string, format : string) : Date {
 					ampm="PM";
 				}
 				else {
-					return null;
+					return newDate;
 				}
 				i_val+=2;
 			}
@@ -385,7 +393,7 @@ function getDateFromFormat(val : string, format : string) : Date {
 
 			default : 
 				if (val.substring(i_val,i_val+token.length)!=token) {
-					return null;
+					return newDate;
 				}
 				else {
 					i_val+=token.length;
@@ -396,25 +404,25 @@ function getDateFromFormat(val : string, format : string) : Date {
 
 	// If there are any trailing characters left in the value, it doesn't match
 	if (i_val != val.length) {
-		 return null; 
+		 return newDate; 
 	}
 	// Is date valid for month?
 	if (month==2) {
 		// Check for leap year
 		if ( ( (year % 4 == 0) && (year % 100 != 0) ) || (year % 400 == 0) ) { // leap year
 			if (date > 29){ 
-				return null; 
+				return newDate; 
 			}
 		}
 		else { 
 			if (date > 28) { 
-				return null; 
+				return newDate; 
 			} 
 		}
 		}
 	if ((month==4) || (month==6) || (month==9) || (month==11)) {
 		if (date > 30) { 
-			return null; 
+			return newDate; 
 		}
 	}
 	// Correct hours value
@@ -425,9 +433,9 @@ function getDateFromFormat(val : string, format : string) : Date {
 		 hh-=12; 
 	} 
 
-	let newdate = new Date(year,month-1,date,hh,mm,ss);
-	return newdate; 
-}
+	newDate = new Date(year,month-1,date,hh,mm,ss);
+	return newDate; 
+}*/
 
 // ------------------------------------------------------------------
 // parseDate( date_string [, prefer_euro_format] )
@@ -442,7 +450,7 @@ function getDateFromFormat(val : string, format : string) : Date {
 // for formats like d/M/y (european format) before M/d/y (American).
 // Returns a Date object or null if no patterns match.
 // ------------------------------------------------------------------
-function parseDate(val : string) : Date {
+/*function parseDate(val : string) : Date {
 	let preferEuro = (arguments.length==2) ? arguments[1] : false;
 	let generalFormats = new Array('y-M-d','MMM d, y','MMM d,y','y-MMM-d','d-MMM-y','MMM d');
 	let monthFirst = new Array('M/d/y','M-d-y','M.d.y','MMM-d','M/d','M-d');
@@ -460,4 +468,4 @@ function parseDate(val : string) : Date {
 		}
 	}
 	return null;
-}
+}*/

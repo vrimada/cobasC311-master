@@ -1,13 +1,16 @@
-export const numeroProtocolo = 'numero'; // COMO MEJORA BUSCARLO EN LA BD
-export const analyzer = 'CobasC311';
-export const idEfector = 70;
-export const DBConfig = {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.logLevel = exports.DBConfig = exports.idEfector = exports.analyzer = exports.numeroProtocolo = void 0;
+exports.numeroProtocolo = 'numero'; // COMO MEJORA BUSCARLO EN LA BD
+exports.analyzer = 'CobasC311';
+exports.idEfector = 70;
+exports.DBConfig = {
     server: "10.1.62.111",
     user: "testcobas",
     password: "t35tc0b45",
     database: "SilNeuquen"
 };
-export const logLevel = 6;
+exports.logLevel = 6;
 /*
  * Logging levels in winston conform to the severity ordering specified by RFC5424:
 severity of all levels is assumed to be numerically ascending from most important to least important.

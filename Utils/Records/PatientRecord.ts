@@ -25,6 +25,7 @@ Explicación de los conceptos del ejemplo:
         'Y' is the year, 'M' is the month, and 'D' is the day.  
 **/
 
+import { TempProtocoloEnvio } from "../TempProtocoloEnvio";
 import { COMPONENT_SEP, FIELD_SEP, RECORD_SEP } from "../constants.js";
 
 export class PatientRecord{
@@ -85,10 +86,10 @@ export class PatientRecord{
         ];
     }
 
-    cargarPatientRecord(protocol){
-        this.setName(protocol[0].paciente);
-        this.setBirthdate(protocol[0].anioNacimiento);
-        this.setSex(protocol[0].sexo);
+    cargarPatientRecord(protocol : TempProtocoloEnvio){
+        this.setName(protocol.getPaciente());
+        this.setBirthdate(protocol.getAnioNacimiento());
+        this.setSex(protocol.getSexo());
     }
 
     

@@ -143,7 +143,7 @@ export class ResultRecord {
             //console.dir(this.getInstrumentIdentification());
         }
         catch(err : any){
-            logger.error('Cannot build ResultRecord.' + err);
+            logger.error('No se pudo armar ResultRecord.' + err);
             throw new Error(err);
         }
     }

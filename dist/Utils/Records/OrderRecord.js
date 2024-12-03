@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrderRecord = void 0;
-var toolbox_1 = require("../toolbox");
-var TestRecord_1 = require("./TestRecord");
-var constants_1 = require("../constants");
+const toolbox_1 = require("../toolbox");
+const TestRecord_1 = require("./TestRecord");
+const constants_1 = require("../constants");
 /****************************
  * OrderRecord               *
  *****************************
@@ -45,8 +45,8 @@ var constants_1 = require("../constants");
  * null,
  * 'F' ],
  **/
-var OrderRecord = /** @class */ (function () {
-    function OrderRecord() {
+class OrderRecord {
+    constructor() {
         this._type = "";
         this._seq = "";
         this._sampleId = "";
@@ -61,92 +61,92 @@ var OrderRecord = /** @class */ (function () {
         this.reportTipo = "";
     }
     // #region GetterSetter
-    OrderRecord.prototype.getType = function () {
+    getType() {
         return this._type;
-    };
-    OrderRecord.prototype.setType = function (type) {
+    }
+    setType(type) {
         this._type = type;
-    };
-    OrderRecord.prototype.getSeq = function () {
+    }
+    getSeq() {
         return this._seq;
-    };
-    OrderRecord.prototype.setSeq = function (seq) {
+    }
+    setSeq(seq) {
         this._seq = seq;
-    };
-    OrderRecord.prototype.setSampleId = function (sampleId) {
+    }
+    setSampleId(sampleId) {
         this._sampleId = sampleId;
-    };
-    OrderRecord.prototype.getSampleId = function () {
+    }
+    getSampleId() {
         return this._sampleId;
-    };
-    OrderRecord.prototype.setInstrument = function (_ins) {
+    }
+    setInstrument(_ins) {
         this._instrument = _ins;
-    };
-    OrderRecord.prototype.getInstrument = function () {
+    }
+    getInstrument() {
         return this._instrument;
-    };
-    OrderRecord.prototype.getPrefijoTipoMuestra = function () {
+    }
+    getPrefijoTipoMuestra() {
         return this._prefijoTipoMuestra;
-    };
-    OrderRecord.prototype.setPrefijoTipoMuestra = function (prefijoTipoMuestra) {
+    }
+    setPrefijoTipoMuestra(prefijoTipoMuestra) {
         this._prefijoTipoMuestra = prefijoTipoMuestra;
-    };
-    OrderRecord.prototype.getBiomaterial = function () {
+    }
+    getBiomaterial() {
         return this._biomaterial;
-    };
-    OrderRecord.prototype.setBiomaterial = function (biomaterial) {
+    }
+    setBiomaterial(biomaterial) {
         this._biomaterial = biomaterial;
-    };
-    OrderRecord.prototype.getDateTimeReported = function () {
+    }
+    getDateTimeReported() {
         return this._dateTimeReported;
-    };
-    OrderRecord.prototype.setDateTimeReported = function (dateTimeReported) {
+    }
+    setDateTimeReported(dateTimeReported) {
         this._dateTimeReported = dateTimeReported;
-    };
-    OrderRecord.prototype.getTests = function () {
+    }
+    getTests() {
         return this._tests;
-    };
-    OrderRecord.prototype.setTests = function (tests) {
+    }
+    setTests(tests) {
         this._tests = tests;
-    };
-    OrderRecord.prototype.getPriority = function () {
+    }
+    getPriority() {
         return this._priority;
-    };
-    OrderRecord.prototype.setPriority = function (priority) {
+    }
+    setPriority(priority) {
         this._priority = priority;
-    };
-    OrderRecord.prototype.getSampleType = function () {
+    }
+    getSampleType() {
         return this._sampleType;
-    };
-    OrderRecord.prototype.setSampleType = function (sampleType) {
+    }
+    setSampleType(sampleType) {
         this._sampleType = sampleType;
-    };
-    OrderRecord.prototype.getAccion = function () {
+    }
+    getAccion() {
         return this._accion;
-    };
-    OrderRecord.prototype.setAccion = function (_acc) {
+    }
+    setAccion(_acc) {
         this._accion = _acc;
-    };
-    OrderRecord.prototype.setReportTipo = function (_reportTipo) {
+    }
+    setReportTipo(_reportTipo) {
         this.reportTipo = _reportTipo;
-    };
-    OrderRecord.prototype.getReportTipo = function () {
+    }
+    getReportTipo() {
         return this.reportTipo;
-    };
+    }
     // #endregion
     // #region PARA_ENVIAR_A_SIL
     /** Datos de COBAS a SIL
       * Carga el flujo de datos de Cobas a la clase Order
       * Se utilizo el PDF del repositorio para identificar la estructura del Order Record
       */
-    OrderRecord.prototype.cargarOrderDesdeASTM = function (flow) {
-        var field = flow.split(constants_1.FIELD_SEP);
-        var prefijoTipoMuestra = '';
-        var id = field[2];
+    cargarOrderDesdeASTM(flow) {
+        let field = flow.split(constants_1.FIELD_SEP);
+        let prefijoTipoMuestra = '';
+        let id = field[2];
         this.setType(field[0]); //(1)Record Type ID
         this.setSeq(field[1]); //(2)Sequence Number
         this.setSampleId(field[2]); //(3)Specimen ID
-        var instrument = field[3].split('^'); //(4)Instrument Specimen ID
+        let instrument = field[3].split('^'); //(4)Instrument Specimen ID
         this.setInstrument(instrument);
         //Setting is as follows:
         //< SequenceNo>^<Rack ID>^<PositionNo>^ ^
@@ -160,11 +160,11 @@ var OrderRecord = /** @class */ (function () {
         this.setSampleType(instrument[4]); //Tipo de muestra
         // #region ArrayTestMuestras
         //cargar muestras a testear
-        var testsArreglo = [];
-        var tests = field[4].split('^');
-        var i = 3; //Arranca en 3 porque tiene la forma ^^^<ApplicationCode>
+        let testsArreglo = [];
+        let tests = field[4].split('^');
+        let i = 3; //Arranca en 3 porque tiene la forma ^^^<ApplicationCode>
         while (i < tests.length) {
-            var testRecord = new TestRecord_1.TestRecord(tests[i]);
+            let testRecord = new TestRecord_1.TestRecord(tests[i]);
             testsArreglo.push(testRecord);
             i = i + 4;
         }
@@ -175,25 +175,25 @@ var OrderRecord = /** @class */ (function () {
         this.setBiomaterial(parseInt(field[15])); //(16)Specimen Descriptor
         this.setReportTipo(field[25]); //(26) Report Types
         if (id.indexOf('-') > -1) {
-            var complexOrderSampleId = id.split('-');
+            let complexOrderSampleId = id.split('-');
             id = complexOrderSampleId[0]; // Nro de protocolo
             prefijoTipoMuestra = complexOrderSampleId[1]; // Prefijo del tipo de muestra
         }
         this.setPrefijoTipoMuestra(prefijoTipoMuestra);
-    };
+    }
     // #endregion
     // #region PARA_ENVIAR_A_COBAS
     /** Datos del SIL a COBAS
      * Carga el protocol del SIL a la clase Order
      */
-    OrderRecord.prototype.cargarOrderRecordParaCobas = function (protocol) {
-        var tipoMuestraNombre = 'Suero/Plasma';
-        var testsArreglo = [];
-        var test;
-        var testSplit;
-        var testComponents = protocol[0].iditem.split(';');
-        var idTest = "";
-        var i = 0;
+    cargarOrderRecordParaCobas(protocol) {
+        let tipoMuestraNombre = 'Suero/Plasma';
+        let testsArreglo = [];
+        let test;
+        let testSplit;
+        let testComponents = protocol.getIdItem().split(';');
+        let idTest = "";
+        let i = 0;
         this.setType('O');
         this.setSeq('1');
         for (i = 0; i < testComponents.length; i++) {
@@ -206,7 +206,7 @@ var OrderRecord = /** @class */ (function () {
         }
         this.setTests(testsArreglo);
         // Tipo de muestra
-        var tipoMuestra = 1;
+        let tipoMuestra = 1;
         switch (tipoMuestraNombre) {
             case "Suero/Plasma":
                 tipoMuestra = 1;
@@ -224,83 +224,80 @@ var OrderRecord = /** @class */ (function () {
                 tipoMuestra = 5;
                 break;
         }
-        this.setSampleId(protocol[0].numeroProtocolo.trim());
+        this.setSampleId(protocol.getNumeroProtocolo().trim());
         this.setBiomaterial(tipoMuestra);
         this.setSampleType('S' + tipoMuestra);
         // <SequenceNo>^<Rack ID>^<PositionNo>^ ^<SampleType>^<ContainerType>
-        var arrayInstrument = [];
-        arrayInstrument.push("0"); //<SequenceNo>
-        arrayInstrument.push(""); //<Rack ID>
-        arrayInstrument.push(""); //<PositionNo>
-        arrayInstrument.push(("S" + tipoMuestra)); //<SampleType>
-        arrayInstrument.push("SC"); //<SampleType> „SC‟: Standerd cup. „MC‟:Micro cup.
-        this.setInstrument(arrayInstrument); //
-        this.setPriority((protocol[0].urgente === 'Y') ? 'S' : 'R'); // Prioridad
+        this.setInstrument(["0", "", "", "S" + tipoMuestra, "SC"]);
+        this.setPriority((protocol.getUrgente() === 'Y') ? 'S' : 'R'); // Prioridad
         this.setAccion("A");
         this.setReportTipo("O");
-    };
+    }
     /**
      * cobas type (Upload) : se tiene que poner al final 'F'  @type Tiene que ir en True (de Cobas a Sil)
      * cobas type (Download) : se tiene que poner al final 'O' @type tiene que ir en False (de Sil a Cobas)
      */
-    OrderRecord.prototype.toArray = function () {
-        var timestamp = (0, toolbox_1.formatDate)(new Date(), 'yyyyMMddHHmmss');
-        var arregloFinal = [];
-        this.getTests().forEach(function (element) {
-            var arregloItem = [];
-            //^^^<ApplicationCode>^<Dilution>\… Repeat \ (delimiter) for multiple test selection.
-            arregloItem.push(null);
-            arregloItem.push(null);
-            arregloItem.push(null);
-            arregloItem.push(element.getId());
-            arregloFinal.push(arregloItem);
-        });
-        return [
-            this.getType(),
-            this.getSeq(),
-            this.getSampleId(),
-            ['0', null, null, null, this.getSampleType(), 'SC'], //[ null, null, null, null, null,null], // [ '0', '50001', '001', null, 'S1','SC'], S1=Plasma, S2=Urine
-            arregloFinal,
-            this.getPriority(),
-            null, // Requested/Ordered Date and Time                                
-            timestamp, // Indicates reception date and time of request.  Setting is as follows.  Deletable. YYYYMMDDHHMMSS
-            null,
-            null,
-            null,
-            'A', //A: => test order form HOST. (Download)
-            null,
-            null,
-            null,
-            this.getBiomaterial(), // This field indicates the type of sample. 1=Plasma, 2=Urine
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            this.getReportTipo()
-        ];
-    };
+    /* toArray() {
+         var timestamp = formatDate(new Date(),'yyyyMMddHHmmss');
+         let arregloFinal : any = [];
+
+         this.getTests().forEach(element => {
+             let arregloItem = [];
+             //^^^<ApplicationCode>^<Dilution>\… Repeat \ (delimiter) for multiple test selection.
+             arregloItem.push(null);
+             arregloItem.push(null);
+             arregloItem.push(null);
+             arregloItem.push(element.getId());
+
+             arregloFinal.push(arregloItem);
+         });
+
+         return [
+             this.getType(),
+             this.getSeq(),
+             this.getSampleId(),
+             [ '0', null, null, null, this.getSampleType(),'SC'],//[ null, null, null, null, null,null], // [ '0', '50001', '001', null, 'S1','SC'], S1=Plasma, S2=Urine
+             arregloFinal,
+             this.getPriority(),
+             null,                       // Requested/Ordered Date and Time
+             timestamp,                  // Indicates reception date and time of request.  Setting is as follows.  Deletable. YYYYMMDDHHMMSS
+             null,
+             null,
+             null,
+             'A', //A: => test order form HOST. (Download)
+             null,
+             null,
+             null,
+             this.getBiomaterial(),           // This field indicates the type of sample. 1=Plasma, 2=Urine
+             null,
+             null,
+             null,
+             null,
+             null,
+             null,
+             null,
+             null,
+             null,
+             this.getReportTipo()
+         ];
+     }*/
     // #endregion
-    OrderRecord.prototype.toASTM = function () {
-        var astm = "";
-        var pipe = constants_1.FIELD_SEP;
-        var sep = constants_1.COMPONENT_SEP;
+    toASTM() {
+        let astm = "";
+        let pipe = constants_1.FIELD_SEP;
+        let sep = constants_1.COMPONENT_SEP;
         var timestamp = (0, toolbox_1.formatDate)(new Date(), 'yyyyMMddHHmmss');
-        var instrument = this.getInstrument();
-        var tests = this.getTests();
-        var muestrasAnalizar = "";
-        tests.forEach(function (element) {
+        let instrument = this.getInstrument();
+        let tests = this.getTests();
+        let muestrasAnalizar = "";
+        tests.forEach(element => {
             muestrasAnalizar += sep.repeat(3) + element.getId() + sep + constants_1.REPEAT_SEP;
         });
         muestrasAnalizar = muestrasAnalizar.substring(0, muestrasAnalizar.length - 1);
         astm += 'O' + pipe; //(1)/Record Type ID
         astm += (this.getSeq() === '' ? "1" : this.getSeq()) + pipe; //(2)Sequence Number
         astm += this.getSampleId() + pipe; //(3)Specimen ID 
-        astm += instrument[0] + sep + instrument[1] + sep + instrument[2] + sep + instrument[3] + sep + instrument[4] + sep + instrument[5] + pipe; //(4)Instrument Specimen ID:   <SequenceNo>^<Rack ID>^<PositionNo>^ ^<SampleType>^<ContainerType>
+        astm += instrument[0] + sep + instrument[1] + sep + instrument[2] + sep + instrument[3] + sep + instrument[4] + pipe; //(4)Instrument Specimen ID:   <SequenceNo>^<Rack ID>^<PositionNo>^ ^<SampleType>^<ContainerType>
         astm += muestrasAnalizar + pipe; //(5)Universal Test ID
         astm += (this.getPriority() === '' ? 'R' : this.getPriority()) + pipe.repeat(2); //(6)Priority
         astm += timestamp + pipe.repeat(4); //(8)Specimen Collection Date and Time
@@ -309,7 +306,6 @@ var OrderRecord = /** @class */ (function () {
         astm += this.getReportTipo(); //(26)Report Types
         astm += constants_1.RECORD_SEP;
         return astm;
-    };
-    return OrderRecord;
-}());
+    }
+}
 exports.OrderRecord = OrderRecord;

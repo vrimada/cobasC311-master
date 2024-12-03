@@ -76,9 +76,9 @@ export class Records{
      }
     // #endregion
 
-     toArray() {
+     /*toArray() {
       return [this.header.toArray(), this.patient.toArray(), this.orden.toArray(), this.comentarios.toArray(), this.termination.toArray()];
-     }
+     }*/
 
      toASTM(){
       let _resultados = "";
@@ -91,24 +91,24 @@ export class Records{
         });
       }
       
-      let header = this.getHeader().toASTM();
+    //  let header = this.getHeader().toASTM();
      // console.log("header "+header.toString());
       
-      let paciente =  this.getPaciente().toASTM();
+      //let paciente =  this.getPaciente().toASTM();
       //console.log("paciente "+paciente);
       
-      let orden = this.getOrden().toASTM();
+      //let orden = this.getOrden().toASTM();
      // console.log("orden " + orden);
       
-      let comentarios = this.getComentarios().toASTM();
+     // let comentarios = this.getComentarios().toASTM();
      // console.log("comentarios "+comentarios);
       
-      let _ter = this.getTermination().toASTM();
+      //let _ter = this.getTermination().toASTM();
       //console.log("termination " +_ter);
      
       //final = `${header} ${paciente} ${orden} ${comentarios} ${result} ${termination}`
 
-      const final = [header , paciente , orden , _resultados, comentarios , _ter].join('');
+      const final = [this.getHeader().toASTM() , this.getPaciente().toASTM() , this.getOrden().toASTM() , _resultados, this.getComentarios().toASTM() , this.getTermination().toASTM()].join('');
  
       return final;
      }

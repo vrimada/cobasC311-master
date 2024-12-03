@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TerminationRecord = void 0;
-var constants_1 = require("../constants");
+const constants_1 = require("../constants");
 /***************************************
 *           TerminationRecord          *
 ****************************************
@@ -11,40 +11,42 @@ var constants_1 = require("../constants");
 * |1 => Sequence Number. Indicates sequence No. Normally it is „1‟
 * |N => Termination Code. „N‟ fixed. (normal end)
 **/
-var TerminationRecord = /** @class */ (function () {
-    function TerminationRecord() {
+class TerminationRecord {
+    constructor() {
+        this.type = "";
+        this.seq = "";
+        this.terminationCode = "";
     }
-    TerminationRecord.prototype.setType = function (_type) {
+    setType(_type) {
         this.type = _type;
-    };
-    TerminationRecord.prototype.getType = function () {
+    }
+    getType() {
         return this.type;
-    };
-    TerminationRecord.prototype.setSeq = function (_seq) {
+    }
+    setSeq(_seq) {
         this.seq = _seq;
-    };
-    TerminationRecord.prototype.getSeq = function () {
+    }
+    getSeq() {
         return this.seq;
-    };
-    TerminationRecord.prototype.getTerminationCode = function () {
+    }
+    getTerminationCode() {
         return this.terminationCode;
-    };
-    TerminationRecord.prototype.setTerminationCode = function (_ter) {
+    }
+    setTerminationCode(_ter) {
         this.terminationCode = _ter;
-    };
-    TerminationRecord.prototype.cargarDesdeASTM = function (flow) {
-        var field = flow.split('|');
+    }
+    cargarDesdeASTM(flow) {
+        let field = flow.split('|');
         this.setType(field[0]);
         this.setSeq(field[1]);
         this.setTerminationCode(field[2]);
-    };
-    TerminationRecord.prototype.toArray = function () {
+    }
+    toArray() {
         return ['L', '1', 'N'];
-    };
-    TerminationRecord.prototype.toASTM = function () {
-        var pipe = constants_1.FIELD_SEP;
+    }
+    toASTM() {
+        let pipe = constants_1.FIELD_SEP;
         return "L" + pipe + "1" + pipe + "N";
-    };
-    return TerminationRecord;
-}());
+    }
+}
 exports.TerminationRecord = TerminationRecord;

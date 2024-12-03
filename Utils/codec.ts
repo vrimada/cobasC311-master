@@ -11,21 +11,19 @@ import { ResultRecord } from './Records/ResultRecord.js';
  * [ETB] is used for the middle frame and [ETX] is used for the last frame.
  */
     
-function isDigit(num){
-    return !isNaN(num)
-}
 
-// #region Codifica
+// #region DECODE_DE_ASTM_A_RECORD
 
 /**
 * 
 * @param {string} message: ASTM message.
-* @returns: Array of records ??????????????????????????????????????????????????????????????????????????????
+* @returns: Array of records
 
 * @throws Error:* If ASTM message is malformed.
 **/
 export function decodeMessage(message : string) : Records {
     if (!(message.startsWith(STX) && message.endsWith(CRLF))){
+        
         throw new Error('Malformed ASTM message. Expected that it will started with STX and followed by CRLF characters. Got:' + message);
     }
     
@@ -33,6 +31,7 @@ export function decodeMessage(message : string) : Records {
     let fraimeMerge : string[] = [];
     let fraime : string = "";
     let msg : string = message.slice(1); // Remove first STX
+
     while (msg.indexOf(STX) > -1 ){
         STXIndex = msg.indexOf(STX);
         fraime = message.slice(0,STXIndex + 1);
@@ -51,74 +50,20 @@ export function decodeMessage(message : string) : Records {
     for (let i = 0; i < recordsArray.length; i++) {
         let fixed : string = recordsArray[i].charAt(0);
         switch(fixed){
-            case 'H' : //carga el header; 
-                decodeHeader(records, recordsArray[i]);
-            break;
-            case 'P' : //carga el paciente; 
-                decodePaciente(records, recordsArray[i]);
-            break;
-            case 'O' : //carga la orden; 
-                decodeOrden(records, recordsArray[i]);
-            break;
-            case 'C' : //carga el comentario; 
-                decodeComentarios(records, recordsArray[i]);
-            break;
-            case 'T' : //carga el termination; 
-                decodeTermination(records, recordsArray[i]);
-            break;
-            case 'R' : //carga el result; 
-                decodeResultados(records, recordsArray[i]);
-            break;
+            case 'H' : /*carga el header; */ decodeHeader(records, recordsArray[i]); break;
+            case 'P' : /*carga el paciente; */  decodePaciente(records, recordsArray[i]);break;
+            case 'O' : /* carga la orden; */  decodeOrden(records, recordsArray[i]);break;
+            case 'C' : /*carga el comentario; */ decodeComentarios(records, recordsArray[i]);break;
+            case 'T' : /*carga el termination; */ decodeTermination(records, recordsArray[i]); break;
+            case 'R' : /*carga el result; */  decodeResultados(records, recordsArray[i]); break;
             default: break;
         }
     }
     return records;
 }
 
-/**
-* Common ASTM decoding function that tries to guess which kind of data it
-* handles.
-* If `data` starts with STX character (``0x02``) than probably it is
-* full ASTM message with checksum and other system characters.
-* If `data` starts with digit character (``0-9``) than probably it is
-* fraime of records leading by his sequence number. No checksum is expected
-* in this case.
-* Otherwise it counts `data` as regular record structure.
-* @param data: ASTM data object.
-* @return: Array of ASTM records.
-**/
-function decodeMessage_Anterior(message){
-    if (!(message.startsWith(STX) && message.endsWith(CRLF))){
-        throw new Error('Malformed ASTM message. Expected that it will started with STX and followed by CRLF characters. Got:' + message);
-    }
-    
-    var STXIndex = -1;
-    var fraimeMerge = [];
-    var fraime = "";
-    var msg = message.slice(1); // Remove first STX
-    while (msg.indexOf(STX) > -1 ){
-        STXIndex = msg.indexOf(STX);
-        fraime = message.slice(0,STXIndex + 1);
-        fraime = decodeFrame(fraime);
-        fraimeMerge.push(fraime);
-        
-        msg = msg.slice(STXIndex + 1);
-        message = message.slice(STXIndex + 1);
-    }
 
-    fraime = decodeFrame(message); // Last frame(should contains ETX)
-    fraimeMerge.push(fraime);
-    
-    var records = fraimeMerge.join("");
-    
-    var recordsArray = records.split(RECORD_SEP);
-    //logger.info(recordsArray); // TODO: Remove line
-    var records2 = [];
-    for (var i = 0; i < recordsArray.length; i++) {
-        records2.push(decodeRecord(recordsArray[i]));
-    }
-    return records2
-}
+
 export function decodeFrame(fraime : string) : string{
     // Decodes ASTM frame 
     fraime = fraime.slice(1);
@@ -135,7 +80,7 @@ export function decodeFrame(fraime : string) : string{
         throw new Error('Incomplete frame data ' + fraime + '. Expected trailing <CR><ETX> or <ETB> chars');
     }
     let seq = fraime.slice(0,1);
-    if (!isDigit(seq)){
+    if (!isDigit(parseInt(seq))){
         throw new Error('Malformed ASTM frame. Expected leading seq number '+ fraime);
     }
     return fraime.slice(1);
@@ -206,7 +151,7 @@ export function decodeRecord(record : string) {
 }
 
 
-export function decodeComponent(field)  {
+export function decodeComponent(field : any)  {
     // Decodes ASTM field component
     let outComponents = [];
     let itemsArray = field.split(COMPONENT_SEP);
@@ -223,7 +168,7 @@ export function decodeComponent(field)  {
     return outComponents;
 }
 
-export function decodeRepeatedComponent(component) {
+export function decodeRepeatedComponent(component : any) {
     // Decodes ASTM field repeated component
     let outRepeatedComponent = [];
     let itemsArray = component.split(REPEAT_SEP);
@@ -237,7 +182,7 @@ export function decodeRepeatedComponent(component) {
 // #endregion
 
 
-// #region Nueva_Codificacion
+// #region ENCODE_DE_RECORD_A_ASTM
 export function encode(records : Records){
     let size : number = 247;
     let msg : string = encodeRecordResult(1, records, ENCODING);
@@ -248,7 +193,7 @@ export function encode(records : Records){
     return [msg];
 }
 
-export function encodeRecordResult(seq : number, records : Records , encoding : string) : string {
+export function encodeRecordResult(seq : number, records : Records , encoding? : string) : string {
     let ASTM = "", datos = "";
     ASTM = records.getHeader().toASTM() + records.getPaciente().toASTM() + records.getOrden().toASTM() + records.getComentarios().toASTM() + records.getTermination().toASTM();
     datos = [(seq % 8) , ASTM, CR, ETX].join('');
@@ -257,128 +202,12 @@ export function encodeRecordResult(seq : number, records : Records , encoding : 
 
 // #endregion
 
-// #region DeArrayATexto
-
-/**
-* Encodes list of records into single ASTM message, also called as "packed"
-* message.
-* If you need to get each record as standalone message use :function:`iter_encode`
-* instead. TODO
-* If the result message is too large (greater than specified `size` if it's
-* not null), then it will be split by chunks.
-*
-* @param records: Array of ASTM records.
-* @param {int} size: Chunk size in bytes.
-* @param {int} seq: Frame start sequence number.
-* @return: List of ASTM message chunks.
-**/
-export function encodeAnterior(records, encoding?, size?, seq?){
-    encoding = typeof encoding !== 'undefined' ? encoding : ENCODING;
-    seq = typeof seq !== 'undefined' ? seq : 1;
-    size = typeof size !== 'undefined' ? size : 247;
-    let msg = encodeMessage(seq, records, encoding);
-    // logger.info(msg);
-    if (size && msg.length > size){
-        // return list(split(msg, size));
-        return split(msg, size);
-    }
-    return [msg];
-}
-
-
-            
-/**
-* Encodes ASTM message.
-* @param {int} seq: Frame sequence number.
-* @param records: List of ASTM records.
-* @param {string} encoding: Data encoding.
-* @return {string}: ASTM complete message with checksum and other control characters.
-**/
-export function encodeMessage(seq : number, records , encoding : string) : string {
-    let data = [];
-    let datos = "";
-    let record;
-    for (let i = 0; i < records.length; i++) {
-        record = records[i];
-        // logger.info(record);
-        //console.log('record',record);
-        data.fill(encodeRecord(record,encoding));
-    }
-    // logger.info(data);
-    data.join(RECORD_SEP);
-    datos = [(seq % 8) , data, CR, ETX].join('');
-    return [STX, data, makeChecksum(datos), CR, LF].join('');
-}
-
-/**
-* Encodes single ASTM record.
-* @param record: ASTM record. Each`string`-typed item counted as field
-               * value, one level nested `list` counted as components
-               * and second leveled - as repeated components.
-* @param {string} encoding: Data encoding.
-* @returns {string}: Encoded ASTM record.
-**/
-export function encodeRecord(record , encoding : string) : string{ 
-    let fields = [];
-        for (let i = 0; i < record.length; i++) {
-            let field = record[i];
-            if (Object.prototype.toString.call(field) === '[object Array]'){
-                fields.push(encodeComponent(field, encoding));
-            } else {
-                switch(typeof field){
-                    case 'undefined' : 
-                    case null :
-                        fields.push(''); 
-                        break;
-                    default :
-                    fields.push(field);
-                    break;
-                }
-            }
-        }
-    
-   
-    return fields.join(FIELD_SEP); // return FIELD_SEP.join(fields)
-}
-
-function encodeComponent(component : string, encoding: string) : string{
-    // Encodes ASTM record field components
-    let items : string[] = [];
-    for (let i = 0; i < component.length; i++) {
-        let item = component[i];
-        if (Object.prototype.toString.call(item) === '[object Array]'){
-            items.push(encodeRepeatedComponent(component, encoding));
-            break;
-        }else{
-            switch(typeof item ){
-                case 'string' :  items.push(item); break;
-                case 'undefined' : case null :  items.push(''); break;
-                default :  items.push(item); break;
-            }
-        }
-    }
-    
-    // let regex = new RegExp("\\" + token.REPEAT_SEP + "*$");
-    // return items.join(token.COMPONENT_SEP).replace(regex, ""); // TODO Hacer un rstrip COMPONENT_SEP.join(items).rstrip(COMPONENT_SEP) 
-    return items.join(COMPONENT_SEP); // TODO Hacer un rstrip COMPONENT_SEP.join(items).rstrip(COMPONENT_SEP) 
-}
-
-
-function encodeRepeatedComponent(components : string, encoding : string) : string{
-    // Encodes repeated components
-    let items : string[] = []
-    for (let i = 0; i < components.length; i++) {
-        let item = components[i];
-        items.push(encodeComponent(item,encoding));
-    }
-    // let regex = new RegExp("\\" + token.REPEAT_SEP + "*$");
-    return items.join(REPEAT_SEP); //.replace(regex, "");;
-
-}
-
-// #endregion
 
 // #region Auxiliares
+function isDigit(num : number){
+    return !isNaN(num)
+}
+
 /**
 * Merges ASTM message `chunks` into single message.
 * @param chunks: List of chunks as `bytes`.

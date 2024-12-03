@@ -1,6 +1,6 @@
 import {COMPONENT_SEP, CR, CRLF, ENCODING, ETB, ETX, FIELD_SEP, LF, RECORD_SEP, REPEAT_SEP, STX } from './constants';
 
-    
+    /*
 function isDigit(num){
     return !isNaN(num)
 }
@@ -20,19 +20,20 @@ function isDigit(num){
 * @return: Array of ASTM records.
 **/
 //export function decode(data : ArrayBuffer)
+/*
 export function decode(data){
     let records;
     let bait =  data.slice(0,1).toString();
 
     /* Si empieza con un digito es un marco */
-    if  (isDigit(bait)){
+   /* if  (isDigit(bait)){
         records = decodeFrame(data);
         return records;
     }
 
     let character = data.slice(0,4).toString();
     /* Si empieza con STX es porque es un mensage completo */
-    if (character.startsWith(STX)){ // # may be decode message \x02...\x03CS\r\n
+    /*if (character.startsWith(STX)){ // # may be decode message \x02...\x03CS\r\n
         records = decodeMessage(data);
         return records;
     }
@@ -56,7 +57,7 @@ export function decode(data){
 * * If checksum verification fails. TODO
 **/
 //export function decodeMessage(message : ArrayBuffer)
-export function decodeMessage(message ){
+/*export function decodeMessage(message ){
     if (!(message.startsWith(STX) && message.endsWith(CRLF))){
         throw new Error('Malformed ASTM message. Expected that it will started with STX and followed by CRLF characters. Got:' + message);
     }
@@ -191,7 +192,7 @@ export function decodeRepeatedComponent(component : string){
 * @param {int} seq: Frame start sequence number.
 * @return: List of ASTM message chunks.
 **/
-export function encode(records: ArrayBuffer, encoding?, size?, seq?){
+/*export function encode(records: ArrayBuffer, encoding?, size?, seq?){
     encoding = typeof encoding !== 'undefined' ? encoding : ENCODING;
     seq = typeof seq !== 'undefined' ? seq : 1;
     size = typeof size !== 'undefined' ? size : 247;
@@ -214,7 +215,7 @@ export function encode(records: ArrayBuffer, encoding?, size?, seq?){
 * @return {string}: ASTM complete message with checksum and other control characters.
 **/
 //export function encodeMessage(seq : number, records : ArrayBuffer, encoding : string) : string 
-export function encodeMessage(seq : number, records , encoding : string) : string {
+/*export function encodeMessage(seq : number, records , encoding : string) : string {
     let data ;
     // let data : ArrayBuffer;
     let record;
@@ -237,7 +238,7 @@ export function encodeMessage(seq : number, records , encoding : string) : strin
 * @param {string} encoding: Data encoding.
 * @returns {string}: Encoded ASTM record.
 **/
-export function encodeRecord(record : ArrayBuffer, encoding : string) : string{ 
+/*export function encodeRecord(record : ArrayBuffer, encoding : string) : string{ 
     let fields = [];
     
     for (let i = 0; i < record.byteLength; i++) {
@@ -301,6 +302,7 @@ function encodeRepeatedComponent(components : string, encoding : string) : strin
 * Merges ASTM message `chunks` into single message.
 * @param chunks: List of chunks as `bytes`.
 **/
+/*
 export function joinChunks(chunks : string) : string{
     let msg = '1';
     let chunksMsg = [];
@@ -324,6 +326,7 @@ export function joinChunks(chunks : string) : string{
 * @param {int }size: Chunk size in bytes.
 * :yield: `bytes`
 **/
+/*
 function split(msg : string, size : number){
     let outputChunks = [];
     let frame = parseInt(msg.slice(1,2));
@@ -381,6 +384,7 @@ export function isChunkedMessage(message : string) : boolean {
 * @param message: ASTM message.
 * @returns: Checksum value in hex base
 **/
+/*
 export function makeChecksum(message : string) : string {
     let sumData = []
     for(let i = 0; i < message.length; i++){
@@ -395,5 +399,5 @@ export function zfill(value : string) : string {
     let pad : string = "00";
     return pad.substring(0, pad.length - str.length) + str;
 }
-
+*/
 // #endregion

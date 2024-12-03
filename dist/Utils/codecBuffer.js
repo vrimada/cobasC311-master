@@ -1,8 +1,12 @@
-import { COMPONENT_SEP, CR, CRLF, ENCODING, ETB, ETX, FIELD_SEP, LF, RECORD_SEP, REPEAT_SEP, STX } from './constants';
-function isDigit(num) {
-    return !isNaN(num);
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+/*
+function isDigit(num){
+return !isNaN(num)
 }
+
 // #region Codifica
+
 /**
 * Common ASTM decoding function that tries to guess which kind of data it
 * handles.
@@ -16,23 +20,30 @@ function isDigit(num) {
 * @return: Array of ASTM records.
 **/
 //export function decode(data : ArrayBuffer)
-export function decode(data) {
+/*
+export function decode(data){
     let records;
-    let bait = data.slice(0, 1).toString();
+    let bait =  data.slice(0,1).toString();
+
     /* Si empieza con un digito es un marco */
-    if (isDigit(bait)) {
-        records = decodeFrame(data);
-        return records;
-    }
-    let character = data.slice(0, 4).toString();
-    /* Si empieza con STX es porque es un mensage completo */
-    if (character.startsWith(STX)) { // # may be decode message \x02...\x03CS\r\n
-        records = decodeMessage(data);
-        return records;
-    }
-    // Maybe is a record
-    return decodeRecord(data);
+/* if  (isDigit(bait)){
+     records = decodeFrame(data);
+     return records;
+ }
+
+ let character = data.slice(0,4).toString();
+ /* Si empieza con STX es porque es un mensage completo */
+/*if (character.startsWith(STX)){ // # may be decode message \x02...\x03CS\r\n
+    records = decodeMessage(data);
+    return records;
 }
+
+
+// Maybe is a record
+return decodeRecord(data);
+}
+
+
 /**
 * Decodes complete ASTM message that is sent or received due
 * communication routines. It should contains checksum that would be
@@ -46,25 +57,30 @@ export function decode(data) {
 * * If checksum verification fails. TODO
 **/
 //export function decodeMessage(message : ArrayBuffer)
-export function decodeMessage(message) {
-    if (!(message.startsWith(STX) && message.endsWith(CRLF))) {
+/*export function decodeMessage(message ){
+    if (!(message.startsWith(STX) && message.endsWith(CRLF))){
         throw new Error('Malformed ASTM message. Expected that it will started with STX and followed by CRLF characters. Got:' + message);
     }
+    
     let STXIndex = -1;
     let fraimeMerge = [];
     let fraime = "";
     let msg = message.slice(1); // Remove first STX
-    while (msg.indexOf(STX) > -1) {
+    while (msg.indexOf(STX) > -1 ){
         STXIndex = msg.indexOf(STX);
-        fraime = message.slice(0, STXIndex + 1);
+        fraime = message.slice(0,STXIndex + 1);
         fraime = decodeFrame(fraime);
         fraimeMerge.push(fraime);
+        
         msg = msg.slice(STXIndex + 1);
         message = message.slice(STXIndex + 1);
     }
+
     fraime = decodeFrame(message); // Last frame(should contains ETX)
     fraimeMerge.push(fraime);
+    
     let recordsS = fraimeMerge.join("");
+    
     let recordsArray = recordsS.split(RECORD_SEP);
     //logger.info(recordsArray); // TODO: Remove line
     let records = [];
@@ -73,72 +89,82 @@ export function decodeMessage(message) {
     }
     return records;
 }
-export function decodeFrame(fraime) {
-    // Decodes ASTM frame 
+
+export function decodeFrame(fraime){
+    // Decodes ASTM frame
     fraime = fraime.slice(1);
-    let fraime_cs = fraime.slice(0, -2);
-    fraime = fraime_cs.slice(0, -2);
+    let fraime_cs = fraime.slice(0,-2);
+    fraime = fraime_cs.slice(0,-2);
     // let cs = fraime_cs.slice(-2);
     // let css = makeChecksum(fraime);
+    
     // TODO Validate checksum
     // if (cs !== css){
-    // throw new Error('Checksum failure: expected ' + cs + ', calculated '+ css); 
+        // throw new Error('Checksum failure: expected ' + cs + ', calculated '+ css);
     // }
-    if (fraime.endsWith(CR + ETX)) {
-        fraime = fraime.slice(0, -2);
+    
+    if (fraime.endsWith(CR + ETX)){
+        fraime = fraime.slice(0,-2);
     }
-    else if (fraime.endsWith(ETB)) {
-        fraime = fraime.slice(0, -1);
+    else if (fraime.endsWith(ETB)){
+        fraime = fraime.slice(0,-1);
     }
-    else {
+    else{
         throw new Error('Incomplete frame data ' + fraime + '. Expected trailing <CR><ETX> or <ETB> chars');
     }
-    let seq = fraime.slice(0, 1);
-    if (!isDigit(seq)) {
-        throw new Error('Malformed ASTM frame. Expected leading seq number ' + fraime);
+    let seq = fraime.slice(0,1);
+    if (!isDigit(seq)){
+        throw new Error('Malformed ASTM frame. Expected leading seq number '+ fraime);
     }
     return fraime.slice(1);
 }
-export function decodeRecord(record) {
+
+
+export function decodeRecord(record : string){
     // Decodes ASTM record message
-    let fields = [];
+    let fields  = [];
     let fieldsArray = record.split(FIELD_SEP);
     for (let i = 0; i < fieldsArray.length; i++) {
         let item = fieldsArray[i];
-        if (item.indexOf(REPEAT_SEP) > -1) {
-            // item = decodeRepeatedComponent(item);
+        if (item.indexOf(REPEAT_SEP)> -1){
+           // item = decodeRepeatedComponent(item);
         }
-        else if (item.indexOf(COMPONENT_SEP) > -1) {
-            // item = decodeComponent(item);
+        else if (item.indexOf(COMPONENT_SEP)> -1){
+           // item = decodeComponent(item);
         }
-        else {
+        else{
             item = item;
         }
-        if (item) {
+        
+        if (item){
             fields.push(item);
         }
-        else {
+        else{
             fields.push(null);
         }
     }
     return fields;
 }
-export function decodeComponent(field) {
+
+
+export function decodeComponent(field : string){
     // Decodes ASTM field component
     let outComponents = [];
     let itemsArray = field.split(COMPONENT_SEP);
+     
     for (let i = 0; i < itemsArray.length; i++) {
         let item = itemsArray[i];
-        if (item) {
+        if (item){
             outComponents.push(item);
         }
-        else {
+        else{
             outComponents.push(null);
         }
     }
     return outComponents;
 }
-export function decodeRepeatedComponent(component) {
+
+export function decodeRepeatedComponent(component : string){
     // Decodes ASTM field repeated component
     let outRepeatedComponent = [];
     let itemsArray = component.split(REPEAT_SEP);
@@ -147,10 +173,12 @@ export function decodeRepeatedComponent(component) {
         outRepeatedComponent.push(decodeComponent(item));
     }
     outRepeatedComponent;
-    return outRepeatedComponent;
+    return outRepeatedComponent
 }
 // #endregion
+
 // #region DeArrayATexto
+
 /**
 * Encodes list of records into single ASTM message, also called as "packed"
 * message.
@@ -164,18 +192,21 @@ export function decodeRepeatedComponent(component) {
 * @param {int} seq: Frame start sequence number.
 * @return: List of ASTM message chunks.
 **/
-export function encode(records, encoding, size, seq) {
+/*export function encode(records: ArrayBuffer, encoding?, size?, seq?){
     encoding = typeof encoding !== 'undefined' ? encoding : ENCODING;
     seq = typeof seq !== 'undefined' ? seq : 1;
     size = typeof size !== 'undefined' ? size : 247;
     let msg = encodeMessage(seq, records, encoding);
     // logger.info(msg);
-    if (size && msg.length > size) {
+    if (size && msg.length > size){
         // return list(split(msg, size));
         return split(msg, size);
     }
     return [msg];
 }
+
+
+            
 /**
 * Encodes ASTM message.
 * @param {int} seq: Frame sequence number.
@@ -184,20 +215,21 @@ export function encode(records, encoding, size, seq) {
 * @return {string}: ASTM complete message with checksum and other control characters.
 **/
 //export function encodeMessage(seq : number, records : ArrayBuffer, encoding : string) : string 
-export function encodeMessage(seq, records, encoding) {
-    let data;
+/*export function encodeMessage(seq : number, records , encoding : string) : string {
+    let data ;
     // let data : ArrayBuffer;
     let record;
     for (let i = 0; i < records.byteLength; i++) {
         record = records[i];
         // logger.info(record);
-        data.fill(encodeRecord(record, encoding));
+        data.fill(encodeRecord(record,encoding));
     }
     // logger.info(data);
     data.join(RECORD_SEP);
-    data = [(seq % 8), data, CR, ETX].join('');
+    data = [(seq % 8) , data, CR, ETX].join('');
     return [STX, data, makeChecksum(data), CR, LF].join('');
 }
+
 /**
 * Encodes single ASTM record.
 * @param record: ASTM record. Each`string`-typed item counted as field
@@ -206,82 +238,83 @@ export function encodeMessage(seq, records, encoding) {
 * @param {string} encoding: Data encoding.
 * @returns {string}: Encoded ASTM record.
 **/
-export function encodeRecord(record, encoding) {
+/*export function encodeRecord(record : ArrayBuffer, encoding : string) : string{
     let fields = [];
+    
     for (let i = 0; i < record.byteLength; i++) {
         let field = record[i];
-        if (Object.prototype.toString.call(field) === '[object Array]') {
+        if (Object.prototype.toString.call(field) === '[object Array]'){
             fields.push(encodeComponent(field, encoding));
-        }
-        else {
-            switch (typeof field) {
-                case 'undefined':
-                case null:
+        } else {
+            switch(typeof field){
+                case 'undefined' :
+                case null :
                     fields.push('');
                     break;
-                default:
-                    fields.push(field);
-                    break;
+                default :
+                fields.push(field);
+                break;
             }
         }
     }
     return fields.join(FIELD_SEP); // return FIELD_SEP.join(fields)
 }
-function encodeComponent(component, encoding) {
+
+function encodeComponent(component : string, encoding: string) : string{
     // Encodes ASTM record field components
-    let items = [];
+    let items : string[] = [];
     for (let i = 0; i < component.length; i++) {
         let item = component[i];
-        if (Object.prototype.toString.call(item) === '[object Array]') {
+        if (Object.prototype.toString.call(item) === '[object Array]'){
             items.push(encodeRepeatedComponent(component, encoding));
             break;
-        }
-        else {
-            switch (typeof item) {
-                case 'string':
-                    items.push(item);
-                    break;
-                case 'undefined':
-                case null:
-                    items.push('');
-                    break;
-                default:
-                    items.push(item);
-                    break;
+        }else{
+            switch(typeof item ){
+                case 'string' :  items.push(item); break;
+                case 'undefined' : case null :  items.push(''); break;
+                default :  items.push(item); break;
             }
         }
     }
+    
     // let regex = new RegExp("\\" + REPEAT_SEP + "*$");
-    // return items.join(COMPONENT_SEP).replace(regex, ""); // TODO Hacer un rstrip COMPONENT_SEP.join(items).rstrip(COMPONENT_SEP) 
-    return items.join(COMPONENT_SEP); // TODO Hacer un rstrip COMPONENT_SEP.join(items).rstrip(COMPONENT_SEP) 
+    // return items.join(COMPONENT_SEP).replace(regex, ""); // TODO Hacer un rstrip COMPONENT_SEP.join(items).rstrip(COMPONENT_SEP)
+    return items.join(COMPONENT_SEP); // TODO Hacer un rstrip COMPONENT_SEP.join(items).rstrip(COMPONENT_SEP)
 }
-function encodeRepeatedComponent(components, encoding) {
+
+
+function encodeRepeatedComponent(components : string, encoding : string) : string{
     // Encodes repeated components
-    let items = [];
+    let items : string[] = []
     for (let i = 0; i < components.length; i++) {
         let item = components[i];
-        items.push(encodeComponent(item, encoding));
+        items.push(encodeComponent(item,encoding));
     }
     // let regex = new RegExp("\\" + REPEAT_SEP + "*$");
     return items.join(REPEAT_SEP); //.replace(regex, "");;
+
 }
+
 // #endregion
+
 // #region Auxiliares
 /**
 * Merges ASTM message `chunks` into single message.
 * @param chunks: List of chunks as `bytes`.
 **/
-export function joinChunks(chunks) {
+/*
+export function joinChunks(chunks : string) : string{
     let msg = '1';
     let chunksMsg = [];
     for (let i = 0; i < chunks.length; i++) {
-        let dataChunk = chunks[i].slice(2, -5);
+        let dataChunk = chunks[i].slice(2,-5);
         chunksMsg.push(dataChunk);
     }
     msg = msg + chunksMsg.join('') + ETX;
-    let completeMsg = [STX, msg, makeChecksum(msg), CRLF];
+    let completeMsg = [STX, msg, makeChecksum(msg), CRLF]
     return completeMsg.join('');
 }
+
 /**
 * Split `msg` into chunks with specified `size`.
 *
@@ -293,46 +326,51 @@ export function joinChunks(chunks) {
 * @param {int }size: Chunk size in bytes.
 * :yield: `bytes`
 **/
-function split(msg, size) {
+/*
+function split(msg : string, size : number){
     let outputChunks = [];
-    let frame = parseInt(msg.slice(1, 2));
-    msg = msg.slice(2, -6);
-    if (size === null || size < 7) {
+    let frame = parseInt(msg.slice(1,2));
+    msg = msg.slice(2,-6);
+    if (size === null || size < 7){
         throw new Error('Chunk size value could not be less then 7 or null');
     }
     let chunks = make_chunks(msg, size - 7);
-    let firstChunks = chunks.slice(0, -1);
+    let firstChunks = chunks.slice(0,-1);
     let last = chunks.slice(-1);
     let idx = 0;
-    let item;
-    for (let i = 0; i < firstChunks.length; i++) {
+    let item : string;
+    for(let i = 0; i < firstChunks.length; i++){
         idx = i;
         let chunk = firstChunks[idx];
-        item = ([((idx + frame) % 8), chunk, ETB]).join('');
-        outputChunks.push(([STX, item, makeChecksum(item), CRLF]).join(''));
+        item = ([((idx + frame) % 8),chunk,ETB]).join('');
+        outputChunks.push(([STX,item,makeChecksum(item),CRLF]).join(''));
     }
-    item = ([((idx + frame + 1) % 8), last, CR, ETX]).join('');
-    outputChunks.push(([STX, item, makeChecksum(item), CRLF]).join(''));
+    item = ([((idx + frame + 1) % 8),last,CR,ETX]).join('');
+    outputChunks.push(([STX,item,makeChecksum(item),CRLF]).join(''));
     return outputChunks;
 }
-export function make_chunks(msg, size) {
-    let chunks = [];
-    let iterElems = [];
-    for (let i = 0; i < msg.length; i++) {
-        iterElems.push(msg.slice(i, i + 1));
+
+export function make_chunks(msg : string , size : number){
+    let chunks : string[] = [];
+    let iterElems : string[] = [];
+    for(let i = 0; i < msg.length; i++){
+        iterElems.push(msg.slice(i,i+1));
     }
-    while (iterElems.length) {
-        chunks.push(iterElems.splice(0, size).join(''));
+    while(iterElems.length) {
+        chunks.push(iterElems.splice(0,size).join(''));
     }
     return chunks;
 }
-export function isChunkedMessage(message) {
+
+
+export function isChunkedMessage(message : string) : boolean {
     //  Checks plain message for chunked byte.
     if (message.length < 5)
         return false;
+
     let ETBIndex = message.indexOf(ETB);
-    if (ETBIndex > -1) {
-        if (ETBIndex === message.length - 5)
+    if (ETBIndex > -1){
+        if (ETBIndex === message.length -5 )
             return true;
         else
             return false;
@@ -340,22 +378,26 @@ export function isChunkedMessage(message) {
     else
         return false;
 }
+
 /**
 * Calculates checksum for specified message.
 * @param message: ASTM message.
 * @returns: Checksum value in hex base
 **/
-export function makeChecksum(message) {
-    let sumData = [];
-    for (let i = 0; i < message.length; i++) {
+/*
+export function makeChecksum(message : string) : string {
+    let sumData = []
+    for(let i = 0; i < message.length; i++){
         sumData.push(message.charCodeAt(i));
-    }
+   }
     let suma = sumData.reduce((a, b) => a + b, 0) & 0xFF;
     return zfill(suma.toString(16).toUpperCase());
 }
-export function zfill(value) {
-    let str = "" + value;
-    let pad = "00";
+
+export function zfill(value : string) : string {
+    let str : string= "" + value;
+    let pad : string = "00";
     return pad.substring(0, pad.length - str.length) + str;
 }
+*/
 // #endregion

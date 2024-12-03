@@ -92,7 +92,7 @@ export class CommentRecord {
 
 
    
-    toArray() : (string | string[])[] {
+   /* toArray() : (string | string[])[] {
         return [ 'C', '1','L',
             ['                              ','                         ','                    ','               ','          '], 
         'G'];
@@ -107,7 +107,7 @@ export class CommentRecord {
             : [this.getComentarios().shift()]), //Comment Text
             (this.getType()  === '' ? 'G' : this.getType()) //Comment Type
         ];
-    }
+    }*/
 
     toASTM() : string{
         let pipe = FIELD_SEP;

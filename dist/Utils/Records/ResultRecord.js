@@ -8,12 +8,15 @@
 * Sample result record decoded:
 * [ 'R','1',[ null, null, null, '458/' ],'55','mg/dl',null,'N',null,'F',null,null,null,null,'P1' ]
 **/
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ResultRecord = void 0;
-var constants_1 = require("../constants");
-var winston_1 = require("winston");
-var ResultRecord = /** @class */ (function () {
-    function ResultRecord() {
+const constants_1 = require("../constants");
+const winston_1 = __importDefault(require("winston"));
+class ResultRecord {
+    constructor() {
         this._type = "";
         this._seq = "";
         this._idItemCobas = 0;
@@ -24,66 +27,66 @@ var ResultRecord = /** @class */ (function () {
         this._instrumentIdentification = "";
     }
     // #region GetterSetter
-    ResultRecord.prototype.getType = function () {
+    getType() {
         return this._type;
-    };
-    ResultRecord.prototype.setType = function (type) {
+    }
+    setType(type) {
         this._type = type;
-    };
-    ResultRecord.prototype.getSeq = function () {
+    }
+    getSeq() {
         return this._seq;
-    };
-    ResultRecord.prototype.setSeq = function (seq) {
+    }
+    setSeq(seq) {
         this._seq = seq;
-    };
-    ResultRecord.prototype.getIdItemCobas = function () {
+    }
+    getIdItemCobas() {
         return this._idItemCobas;
-    };
-    ResultRecord.prototype.setIdItemCobas = function (test) {
+    }
+    setIdItemCobas(test) {
         this._idItemCobas = test;
-    };
-    ResultRecord.prototype.getValue = function () {
+    }
+    getValue() {
         return this._value;
-    };
-    ResultRecord.prototype.setValue = function (value) {
+    }
+    setValue(value) {
         this._value = value;
-    };
-    ResultRecord.prototype.getUnits = function () {
+    }
+    getUnits() {
         return this._units;
-    };
-    ResultRecord.prototype.setUnits = function (units) {
+    }
+    setUnits(units) {
         this._units = units;
-    };
-    ResultRecord.prototype.getStatus = function () {
+    }
+    getStatus() {
         return this._status;
-    };
-    ResultRecord.prototype.setStatus = function (_s) {
+    }
+    setStatus(_s) {
         this._status = _s;
-    };
-    ResultRecord.prototype.setNormalFlag = function (normalFlag) {
+    }
+    setNormalFlag(normalFlag) {
         this._normalFlag = normalFlag;
-    };
-    ResultRecord.prototype.getNormalFlag = function () {
+    }
+    getNormalFlag() {
         return this._normalFlag;
-    };
-    ResultRecord.prototype.getInstrumentIdentification = function () {
+    }
+    getInstrumentIdentification() {
         return this._instrumentIdentification;
-    };
-    ResultRecord.prototype.setInstrumentIdentification = function (instrumentIdentification) {
+    }
+    setInstrumentIdentification(instrumentIdentification) {
         this._instrumentIdentification = instrumentIdentification;
-    };
+    }
     // #endregion
-    ResultRecord.prototype.CargarResultDesdeASTM = function (flow) {
+    CargarResultDesdeASTM(flow) {
         try {
-            var record = flow.split('|');
+            let record = flow.split('|');
             this.setType(record[0]); //(1)Record Type ID
             this.setSeq(record[1]); //(2)Sequence Number
             /* Indicates order.
               ^^^
               <ApplicationCode>/<Dilution>/<pre-dilution>/…
               */
-            var components = record[2].split(constants_1.COMPONENT_SEP);
-            var items = components[3].split('/');
+            let components = record[2].split(constants_1.COMPONENT_SEP);
+            let items = components[3].split('/');
             //console.dir(record[2] + " "+ items[0]);
             this.setIdItemCobas(parseInt(items[0]));
             this.setValue(parseFloat(record[3])); //(4)Data or Measurement Value
@@ -113,14 +116,14 @@ var ResultRecord = /** @class */ (function () {
             //console.dir(this.getInstrumentIdentification());
         }
         catch (err) {
-            winston_1.default.error('Cannot build ResultRecord.' + err);
+            winston_1.default.error('No se pudo armar ResultRecord.' + err);
             throw new Error(err);
         }
-    };
-    ResultRecord.prototype.toASTM = function () {
-        var astm = "";
-        var pipe = constants_1.FIELD_SEP;
-        var sep = constants_1.COMPONENT_SEP;
+    }
+    toASTM() {
+        let astm = "";
+        let pipe = constants_1.FIELD_SEP;
+        let sep = constants_1.COMPONENT_SEP;
         astm += this.getType() + pipe; //(1)Record Type ID
         astm += this.getSeq() + pipe; //(2)Sequence Number
         astm += sep.repeat(3) + this.getIdItemCobas() + '/' + pipe; //(3)Universal Test ID 
@@ -131,7 +134,6 @@ var ResultRecord = /** @class */ (function () {
         astm += this.getInstrumentIdentification(); //(14) Instrument Identification
         astm += constants_1.RECORD_SEP;
         return astm;
-    };
-    return ResultRecord;
-}());
+    }
+}
 exports.ResultRecord = ResultRecord;

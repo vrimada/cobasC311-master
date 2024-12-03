@@ -1,10 +1,23 @@
-let { logger } = require('winston');
-let { sql } = require("seriate");
-import { DBConfig, analyzer, idEfector } from './config';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.guardarResultados = guardarResultados;
+exports.tieneProtocolosParaEnviar = tieneProtocolosParaEnviar;
+exports.traerProximoProtocolParaEnviar = traerProximoProtocolParaEnviar;
+exports.removeLastProtocolSent = removeLastProtocolSent;
+exports.borrarTempProtocolEnvio = borrarTempProtocolEnvio;
+exports.logMessages = logMessages;
+const winston_1 = __importDefault(require("winston"));
+const config_1 = require("../config");
 // SQL Server config settings
-sql.setDefaultConfig(DBConfig);
+const sql = require("seriate");
+sql.setDefaultConfig(config_1.DBConfig);
+let logger;
+iniciarLog();
 //Guarda los resultados un item del Cobas al SIL
-export function saveResult(result, order) {
+function guardarResultados(result, order) {
     let tipoMuestra = "Suero/Plasma";
     switch (order.getBiomaterial()) {
         case 1:
@@ -143,57 +156,68 @@ export function saveResult(result, order) {
         logMessages(errMessage);
     });
 }
-export function hasProtocolsToSend() {
+function tieneProtocolosParaEnviar() {
     return sql.execute({
         query: "SELECT count(*) as total FROM LAB_TempProtocoloEnvio WHERE equipo = @equipo AND idEfector = @idEfector",
         params: {
-            equipo: { type: sql.NVARCHAR, val: analyzer },
-            idEfector: { type: sql.INT, val: idEfector }
+            equipo: { type: sql.NVARCHAR, val: config_1.analyzer },
+            idEfector: { type: sql.INT, val: config_1.idEfector }
         }
     });
 }
-export function getNextProtocolToSend() {
+function traerProximoProtocolParaEnviar() {
+    //logger.info("Trae un protocolo de la DB");
+    //logger.error("Something bad happened: - Trae un protocolo de la DB");
     return sql.execute({
         query: "SELECT TOP 1 * FROM LAB_TempProtocoloEnvio WHERE equipo = @equipo  AND idEfector = @idEfector",
         params: {
-            equipo: { type: sql.NVARCHAR, val: analyzer },
-            idEfector: { type: sql.INT, val: idEfector }
+            equipo: { type: sql.NVARCHAR, val: config_1.analyzer },
+            idEfector: { type: sql.INT, val: config_1.idEfector }
         }
     });
 }
-export function removeLastProtocolSent() {
-    getNextProtocolToSend().then(function (results) {
+function removeLastProtocolSent() {
+    traerProximoProtocolParaEnviar().then(function (results) {
         for (var i = 0; i < results.length; i++) { // Always only 1 iteration
             var protocol = results[i];
-            removeProtocol(protocol.idTempProtocoloEnvio);
+            borrarTempProtocolEnvio(protocol.idTempProtocoloEnvio);
         }
     }, function (err) {
         logger.error("Something bad happened:", err);
     });
 }
-export function removeProtocol(idTempProtocolo) {
+function borrarTempProtocolEnvio(idTempProtocolo) {
     return sql.execute({
         query: "DELETE FROM LAB_TempProtocoloEnvio WHERE idTempProtocoloEnvio = @_id",
         params: {
-            _id: {
-                type: sql.INT,
-                val: idTempProtocolo,
-            }
+            _id: { type: sql.INT, val: idTempProtocolo, }
         }
     });
 }
-export function logMessages(logMessage) {
+function logMessages(logMessage) {
     var logTime = new Date();
     sql.execute({
         query: "INSERT INTO Temp_Mensaje(mensaje,fechaRegistro, idEfector) VALUES (@_mensaje,@_fechaRegistro, @idEfector)",
         params: {
             _mensaje: { type: sql.NVARCHAR, val: logMessage },
             _fechaRegistro: { type: sql.DATETIME, val: logTime },
-            idEfector: { type: sql.INT, val: idEfector }
+            idEfector: { type: sql.INT, val: config_1.idEfector }
         }
     }).then(function (results) {
         logger.info(results);
     }, function (err) {
         logger.error("Something bad happened:", err);
+    });
+}
+function iniciarLog() {
+    logger = winston_1.default.createLogger({
+        level: 'info',
+        format: winston_1.default.format.combine(winston_1.default.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), // Formato de la fecha
+        winston_1.default.format.printf(({ timestamp, level, message }) => {
+            return `${timestamp} [${level}]: ${message}`; // Combina la fecha, nivel y mensaje
+        })),
+        transports: [
+            new winston_1.default.transports.File({ filename: 'Log-DB.log' }),
+        ],
     });
 }

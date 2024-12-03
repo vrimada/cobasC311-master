@@ -1,41 +1,6 @@
 import { COMPONENT_SEP, FIELD_SEP, RECORD_SEP, REPEAT_SEP, STX } from "../constants.js";
 
-/***************************************
-*             HeaderRecord             *
-****************************************
-* Sample header record text:
-* H|\^&|||host^1|||||cobas c 311|TSDWN^BATCH|P|1 [CR]
-* 
-* H => esta fijada, es de tipo string, maximo 1 caracter
-* |\^& => caracteres fijados
-* | => Message Control ID
-* | => Access Password
-* | host^1 => Sender Name or ID
-* | => Sender Street Address
-* | => Reserved Field
-* | => Sender Telephone Number
-* | => Characteristics of Sender
-* |cobas c 311 => Receiver ID
-* |TSDWN^BATCH => Comment or Special Instructions. 
-*       Setting is as follows: <Meaning of message>^< Mode of message >
- 
-        <Meaning of message> Type: ST Max: 5
-        „TSREQ‟: TS inquiry.
-        „TSDWN‟: Test selection download.
-        „RSUPL„: Result report
-        „PCUPL„: Photometry calibration report
-        „ICUPL„: ISE calibration report
-        „ABUPL‟: Absorbance report
-        „RSREQ‟: Inquiry for the result
 
-        <Mode of message> Type: ST Max: 5
-        „REAL‟: communication in real time.
-        „BATCH‟: communication based on request from cobas c 311/HOST.
-        „REPLY‟: reply to the request.
-
-|P => Processing ID
-|1 => Version No.
-**/
 export class HeaderRecord{
         private tipo : string;
         private emisor : string;

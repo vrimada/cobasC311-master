@@ -1,20 +1,29 @@
 {
-  "name": "astm-js",
+  "name": "cobasc311-master",
   "version": "1.0.0",
-  "description": "ASTM python port",
-  "main": "index.js",
+  "description": "ASTM Ts Port",
+  "main": "protocol.js",
   "scripts": {
-    "test": "mocha"
+    "dev": "nodemon"
   },
-  "author": "David Nievas",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vrimada/cobasC311-master.git"
+  },
+  "author": "Tics",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vrimada/cobasC311-master/issues"
+  },
+  "homepage": "https://github.com/vrimada/cobasC311-master#readme",
   "dependencies": {
-    "mocha": "3.1.2",
-    "mssql": "3.3.0",
-    "serialport": "4.0.3",
-    "seriate": "0.8.0",
-    "sqlite3": "3.1.8",
-    "winston": "2.3.0"
+    "mocha": "^10.8.2",
+    "serialport": "^12.0.0",
+    "seriate": "^5.0.0",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7",
+    "ts-node": "^10.9.2"
   }
-  
 }

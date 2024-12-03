@@ -1,16 +1,19 @@
-let { logger } = require('winston');
-let { sql } = require("seriate");
-
+import winston from 'winston';
 import { ResultRecord }  from './Records/ResultRecord';
 import { OrderRecord } from './Records/OrderRecord';
-import { DBConfig, analyzer, idEfector } from './config';
+import { DBConfig, analyzer, idEfector } from '../config';
+import { TempProtocoloEnvio } from './TempProtocoloEnvio';
 
 // SQL Server config settings
+const sql = require( "seriate" );
 sql.setDefaultConfig(DBConfig);
+
+let logger : winston.Logger;
+iniciarLog();
 
 
 //Guarda los resultados un item del Cobas al SIL
-export function saveResult(result : ResultRecord, order : OrderRecord) : void {
+export function guardarResultados(result : ResultRecord, order : OrderRecord) : void {
     let tipoMuestra : string = "Suero/Plasma";
 
     switch (order.getBiomaterial()) {
@@ -148,7 +151,7 @@ export function saveResult(result : ResultRecord, order : OrderRecord) : void {
     );
 }
 
-export function hasProtocolsToSend() {
+export function tieneProtocolosParaEnviar() {
     return sql.execute({
         query: "SELECT count(*) as total FROM LAB_TempProtocoloEnvio WHERE equipo = @equipo AND idEfector = @idEfector",
         params: {
@@ -159,35 +162,35 @@ export function hasProtocolsToSend() {
 
 }
 
-export function getNextProtocolToSend()   {
-    return sql.execute({
-        query: "SELECT TOP 1 * FROM LAB_TempProtocoloEnvio WHERE equipo = @equipo  AND idEfector = @idEfector",
-        params: {
-            equipo: { type: sql.NVARCHAR, val: analyzer },
-            idEfector: { type : sql.INT, val: idEfector }
-        }
-    })
+export function traerProximoProtocolParaEnviar() : Promise<TempProtocoloEnvio>  {
+    //logger.info("Trae un protocolo de la DB");
+    //logger.error("Something bad happened: - Trae un protocolo de la DB");
+   return sql.execute({
+            query: "SELECT TOP 1 * FROM LAB_TempProtocoloEnvio WHERE equipo = @equipo  AND idEfector = @idEfector",
+            params: {
+                equipo: { type: sql.NVARCHAR, val: analyzer },
+                idEfector: { type : sql.INT, val: idEfector }
+            }
+        });
+    
 }
 
 export function removeLastProtocolSent() : void {
-    getNextProtocolToSend().then(function (results : any) {
+    traerProximoProtocolParaEnviar().then(function (results : any) {
         for (var i = 0; i < results.length; i++) { // Always only 1 iteration
             var protocol = results[i];
-            removeProtocol(protocol.idTempProtocoloEnvio);
+            borrarTempProtocolEnvio(protocol.idTempProtocoloEnvio);
         }
     }, function (err : String) {
         logger.error("Something bad happened:", err);
     });
 }
 
-export function removeProtocol(idTempProtocolo : number) {
+export function borrarTempProtocolEnvio(idTempProtocolo : number) {
     return sql.execute({
         query: "DELETE FROM LAB_TempProtocoloEnvio WHERE idTempProtocoloEnvio = @_id",
         params: {
-            _id: {
-                type: sql.INT,
-                val: idTempProtocolo,
-            }
+            _id: {type: sql.INT, val: idTempProtocolo,}
         }
     })
 }
@@ -201,10 +204,27 @@ export function logMessages(logMessage : string) : void{
             _fechaRegistro : {type : sql.DATETIME, val : logTime },
             idEfector: { type : sql.INT , val: idEfector }
         }
-    }).then(function (results) {
+    }).then(function (results: any) {
         logger.info(results);
-    }, function (err) {
+    }, function (err: any) {
         logger.error("Something bad happened:", err);
     });
    
+}
+
+function iniciarLog(){// Para crear los logs
+    logger = winston.createLogger({
+    level: 'info',
+    format:
+        winston.format.combine(
+        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), // Formato de la fecha
+        winston.format.printf(({ timestamp, level, message }) => {
+          return `${timestamp} [${level}]: ${message}`; // Combina la fecha, nivel y mensaje
+        })
+      ),
+    transports: [
+      new winston.transports.File({ filename: 'Log-DB.log'}),
+    ],
+  });
+  
 }

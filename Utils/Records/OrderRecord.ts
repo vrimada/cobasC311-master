@@ -1,7 +1,7 @@
 import  { formatDate }  from '../toolbox';
 import { TestRecord } from "./TestRecord";
 import {  COMPONENT_SEP, FIELD_SEP, RECORD_SEP, REPEAT_SEP } from '../constants';
-  
+import { TempProtocoloEnvio } from '../TempProtocoloEnvio';
   
    /****************************
     * OrderRecord               *
@@ -228,6 +228,7 @@ import {  COMPONENT_SEP, FIELD_SEP, RECORD_SEP, REPEAT_SEP } from '../constants'
                 prefijoTipoMuestra = complexOrderSampleId[1];   // Prefijo del tipo de muestra
             }
             this.setPrefijoTipoMuestra(prefijoTipoMuestra);
+            
         }
 
         // #endregion
@@ -237,13 +238,12 @@ import {  COMPONENT_SEP, FIELD_SEP, RECORD_SEP, REPEAT_SEP } from '../constants'
         /** Datos del SIL a COBAS
          * Carga el protocol del SIL a la clase Order
          */
-        cargarOrderRecordParaCobas(protocol){
-
+        cargarOrderRecordParaCobas(protocol : TempProtocoloEnvio){
             let tipoMuestraNombre : string = 'Suero/Plasma';
             let testsArreglo : TestRecord[] = [];
             let test : TestRecord;
             let testSplit : string[];
-            let testComponents : string = protocol[0].iditem.split(';');
+            let testComponents : string[] = protocol.getIdItem().split(';');
             let idTest : string = "";
             let i : number = 0;
 
@@ -259,7 +259,6 @@ import {  COMPONENT_SEP, FIELD_SEP, RECORD_SEP, REPEAT_SEP } from '../constants'
                 testsArreglo.push(test);
             }
             this.setTests(testsArreglo);
-
              // Tipo de muestra
             let tipoMuestra : number = 1;
             switch (tipoMuestraNombre){
@@ -269,20 +268,15 @@ import {  COMPONENT_SEP, FIELD_SEP, RECORD_SEP, REPEAT_SEP } from '../constants'
                 case "Suprnt": tipoMuestra = 4; break;
                 case "Otros": tipoMuestra = 5; break;
             }
-            this.setSampleId(protocol[0].numeroProtocolo.trim());
+            this.setSampleId(protocol.getNumeroProtocolo().trim());
             this.setBiomaterial(tipoMuestra);
             this.setSampleType( 'S' + tipoMuestra);
 
             // <SequenceNo>^<Rack ID>^<PositionNo>^ ^<SampleType>^<ContainerType>
-            let arrayInstrument : string[] = [];
-            arrayInstrument.push("0"); //<SequenceNo>
-            arrayInstrument.push(""); //<Rack ID>
-            arrayInstrument.push(""); //<PositionNo>
-            arrayInstrument.push(("S" + tipoMuestra)); //<SampleType>
-            arrayInstrument.push("SC"); //<SampleType> „SC‟: Standerd cup. „MC‟:Micro cup.
-            this.setInstrument(arrayInstrument); //
+            this.setInstrument(["0", "", "", "S"+ tipoMuestra, "SC"]);
+           
 
-            this.setPriority((protocol[0].urgente === 'Y') ?  'S' : 'R'); // Prioridad
+            this.setPriority((protocol.getUrgente() === 'Y') ?  'S' : 'R'); // Prioridad
             this.setAccion("A");
             this.setReportTipo("O");
         }
@@ -293,9 +287,9 @@ import {  COMPONENT_SEP, FIELD_SEP, RECORD_SEP, REPEAT_SEP } from '../constants'
          * cobas type (Upload) : se tiene que poner al final 'F'  @type Tiene que ir en True (de Cobas a Sil)
          * cobas type (Download) : se tiene que poner al final 'O' @type tiene que ir en False (de Sil a Cobas)
          */
-        toArray() {
+       /* toArray() {
             var timestamp = formatDate(new Date(),'yyyyMMddHHmmss');
-            let arregloFinal = [];
+            let arregloFinal : any = [];
 
             this.getTests().forEach(element => {
                 let arregloItem = [];
@@ -336,11 +330,11 @@ import {  COMPONENT_SEP, FIELD_SEP, RECORD_SEP, REPEAT_SEP } from '../constants'
                 null,
                 this.getReportTipo() 
             ];
-        }
+        }*/
         // #endregion
 
         toASTM() : string{
-            let astm : string = "";
+              let astm : string = "";
             let pipe : string = FIELD_SEP;
             let sep : string = COMPONENT_SEP;
             var timestamp : string = formatDate(new Date(),'yyyyMMddHHmmss');
@@ -355,7 +349,7 @@ import {  COMPONENT_SEP, FIELD_SEP, RECORD_SEP, REPEAT_SEP } from '../constants'
             astm += 'O'  + pipe;//(1)/Record Type ID
             astm += (this.getSeq() === '' ? "1" : this.getSeq()) + pipe; //(2)Sequence Number
             astm += this.getSampleId() + pipe;//(3)Specimen ID 
-            astm += instrument[0] + sep + instrument[1] + sep + instrument[2] + sep + instrument[3] + sep + instrument[4] + sep + instrument[5] + pipe;  //(4)Instrument Specimen ID:   <SequenceNo>^<Rack ID>^<PositionNo>^ ^<SampleType>^<ContainerType>
+            astm += instrument[0] + sep + instrument[1] + sep + instrument[2] + sep + instrument[3] + sep + instrument[4] + pipe;  //(4)Instrument Specimen ID:   <SequenceNo>^<Rack ID>^<PositionNo>^ ^<SampleType>^<ContainerType>
             astm += muestrasAnalizar + pipe;//(5)Universal Test ID
             astm += (this.getPriority() === '' ? 'R' : this.getPriority()) + pipe.repeat(2);//(6)Priority
             astm += timestamp + pipe.repeat(4);//(8)Specimen Collection Date and Time

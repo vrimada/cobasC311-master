@@ -2,6 +2,7 @@
 logs
 **/*.log
 **/*.log*
+*.log
 
 # Directorios y dependencias
 node_modules
